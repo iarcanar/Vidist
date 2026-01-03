@@ -15,7 +15,7 @@ const VIDIST_VERSION = {
     // Semantic Version (Major.Minor.Patch)
     major: 2,
     minor: 6,
-    patch: 4,
+    patch: 5,
 
     // Build number (MMDDYYYY format)
     build: 'git01032026',
@@ -44,6 +44,7 @@ const VIDIST_VERSION = {
 
     // Latest features changelog
     features: [
+        '🎨 Header & Touch UX v2.6.5 (Redesigned header sections to horizontal 1-line compact cards, added large 40x40px touch-friendly resize handles with visual gradient indicators on all textareas)',
         '📱 Mobile UX Polish v2.6.4 (Fixed Wavespeed logo display, compact video capacity estimate, panel overflow fixes, reorganized image upload to full-width top position with 200px max-height)',
         '🔧 Mobile Layout Fix v2.6.3 (Fixed 1-column vertical layout on mobile, added "VIDIST - mobile" branding, fullscreen modals, proper Prompt Craft → History ordering)',
         '🎨 CSS Architecture v2.6.2 (Separated mobile.css from main.css for better maintainability, desktop loads 12% faster, easier to develop mobile features)',
