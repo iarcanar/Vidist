@@ -24,6 +24,14 @@
 
 /* Mobile breakpoint (< 768px) */
 @media (max-width: 768px) {
+    /* Mobile branding - แสดง "- mobile" หลัง VIDIST */
+    h1.glitch.neon-text::after {
+        content: " - mobile";
+        font-size: 0.6em;
+        font-weight: 300;
+        color: rgba(139, 92, 246, 0.7);
+    }
+
     /* Typography - ขยายตัวอักษรให้อ่านง่าย */
     body {
         font-size: 16px;
