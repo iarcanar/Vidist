@@ -1200,7 +1200,7 @@ Previous Releases:
             <div class="p-6 flex-1">
                 <div id="modal-video-container" class="relative bg-black rounded-xl overflow-hidden neon-border-cyan"
                     style="max-height: calc(95vh - 200px);">
-                    <video id="modal-video-player" class="w-full h-full" controls preload="metadata"
+                    <video id="modal-video-player" class="w-full h-full" controls preload="auto"
                         crossorigin="anonymous" loop style="max-height: calc(95vh - 200px);"></video>
 
                     <!-- ✨ Loading Overlay - Cyber Design -->
@@ -7757,14 +7757,15 @@ Previous Releases:
                 };
 
                 // Attach event listeners FIRST
-                videoPlayer.addEventListener('canplay', onCanPlay, { once: true });
+                // Use 'canplaythrough' instead of 'canplay' for better buffering
+                videoPlayer.addEventListener('canplaythrough', onCanPlay, { once: true });
                 videoPlayer.addEventListener('error', onError, { once: true });
 
-                // Timeout: Safety net for slow networks (15 seconds)
+                // Timeout: Safety net for slow networks (30 seconds for canplaythrough)
                 timeoutId = setTimeout(() => {
                     cleanup();
-                    reject(new Error('Video loading timeout after 15s'));
-                }, 15000);
+                    reject(new Error('Video loading timeout after 30s'));
+                }, 30000);
 
                 // NOW set the src AFTER listeners are attached
                 console.log('🎬 Setting video src:', videoSrc.substring(0, 100) + '...');
