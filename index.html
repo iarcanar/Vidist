@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <!--
 ╔═══════════════════════════════════════════════════════════════════════════╗
-║ VIDIST v2.6.0 - Precision Creative Engine                                ║
-║ Build: 01032026                                                           ║
+║ VIDIST v2.6.1 - Precision Creative Engine                                ║
+║ Build: git01032026                                                        ║
 ║ ⚠️ WARNING: Update version to match js/version.js when modifying!        ║
 ║ AI-Powered Prompt & Video Crafting Platform                              ║
 ║ By: iarcanar                                                              ║
@@ -60,7 +60,7 @@ Previous Releases:
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#1a1a2e">
-    <title>VIDIST v2.6.0 - Precision Creative Engine</title>
+    <title>VIDIST v2.6.1 - Precision Creative Engine</title>
     <link rel="icon" type="image/x-icon" href="assets/VIDIST_ICO.ico?v=2">
     <link rel="shortcut icon" type="image/x-icon" href="assets/VIDIST_ICO.ico?v=2">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -7680,26 +7680,10 @@ Previous Releases:
             videoPlayer.style.transition = 'opacity 0.3s ease-in-out';
 
             try {
-                // ✨ 1. Check in-memory cache first
-                const cachedUrl = await getCachedVideo(videoId);
-                if (cachedUrl) {
-                    // 🔧 FIX: Skip blob:null URLs - they have playback issues (stuck, no loop)
-                    if (cachedUrl.startsWith('blob:null/')) {
-                        console.warn('⚠️ Skipping blob:null cache (known playback issues)');
-                        console.log('🌐 Loading video from network instead');
-                        await setupVideoLoading(videoPlayer, loadingOverlay, videoUrl);
-                        console.log('✅ Video loaded from network and ready');
-                        return;
-                    }
-
-                    console.log('📦 Loading video from cache:', cachedUrl.substring(0, 50));
-                    await setupVideoLoading(videoPlayer, loadingOverlay, cachedUrl);
-                    console.log('✅ Video loaded from cache and ready');
-                    return;
-                }
-
-                // ✨ 2. Fetch from network (Wavespeed direct URL)
-                console.log('🌐 Loading video from network');
+                // v2.6.1 FIX: Always load from server (skip cache to avoid buffering issues)
+                // Previous issue: blob cache caused videos to play 2s then pause for 10s
+                // Solution: Stream directly from Wavespeed server every time
+                console.log('🌐 Loading video directly from server (cache bypassed)');
                 await setupVideoLoading(videoPlayer, loadingOverlay, videoUrl);
                 console.log('✅ Video loaded from network and ready');
 

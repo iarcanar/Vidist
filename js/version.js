@@ -15,10 +15,10 @@ const VIDIST_VERSION = {
     // Semantic Version (Major.Minor.Patch)
     major: 2,
     minor: 6,
-    patch: 0,
+    patch: 1,
 
     // Build number (MMDDYYYY format)
-    build: '01032026',
+    build: 'git01032026',
 
     // Computed full version string
     get full() {
@@ -44,6 +44,7 @@ const VIDIST_VERSION = {
 
     // Latest features changelog
     features: [
+        '🎬 Video Buffering Fix v2.6.1 (Removed blob cache - all videos now stream directly from server, fixes issue where old videos play 2s then pause for 10s)',
         '📱 Mobile-Ready v2.6.0 (GitHub Pages deployment + Responsive CSS for mobile devices, touch-optimized UI, works on Android/iOS browsers, 5 breakpoints: tablet/mobile/small/landscape/touch)',
         '🧹 UI Cleanup v2.5.9 (Removed legacy "GENERATED VIDEO" player section - videos now viewable exclusively through History section, cleaner streamlined interface)',
         '🎯 Red Mode Simplification v2.5.8 (Removed rigid SCOPE system - AI now interprets user intent directly, added heterosexual & lesbian examples, made 12-step progression flexible)',
