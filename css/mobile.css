@@ -149,6 +149,92 @@
         gap: 0.5rem !important;
     }
 
+    /* Video Capacity Estimate - Compact mobile display */
+    header .cyber-card {
+        padding: 0.5rem !important;
+    }
+
+    header .cyber-card .flex.items-center.gap-4 {
+        flex-direction: column !important;
+        gap: 0.25rem !important;
+        align-items: flex-start !important;
+    }
+
+    header .cyber-card .w-8.h-8 {
+        width: 1rem !important;
+        height: 1rem !important;
+    }
+
+    header .cyber-card svg {
+        width: 0.75rem !important;
+        height: 0.75rem !important;
+    }
+
+    header .cyber-card .border-l {
+        border-left: none !important;
+        padding-left: 0 !important;
+        margin-top: 0.25rem !important;
+    }
+
+    header .cyber-card .text-right {
+        display: inline-block !important;
+        margin-right: 0.5rem !important;
+    }
+
+    /* Panel overflow fixes */
+    .cyber-card {
+        overflow: hidden !important;
+    }
+
+    .max-w-7xl {
+        overflow-x: hidden !important;
+    }
+
+    main {
+        padding-left: 0.5rem !important;
+        padding-right: 0.5rem !important;
+    }
+
+    /* Image Upload + Prompt Craft Layout on Mobile */
+    .flex.gap-4:has(#image-upload-section-left) {
+        flex-direction: column !important;
+        gap: 1rem !important;
+    }
+
+    #image-upload-section-left {
+        width: 100% !important;
+        order: -1 !important; /* Move to top */
+    }
+
+    /* Compact image upload area on mobile */
+    #drag-drop-area-left {
+        padding: 1rem !important;
+        min-height: 100px !important;
+    }
+
+    #drag-drop-area-left svg {
+        width: 2rem !important;
+        height: 2rem !important;
+        margin-bottom: 0.25rem !important;
+    }
+
+    #drag-drop-area-left p {
+        font-size: 0.75rem !important;
+        margin-bottom: 0.125rem !important;
+    }
+
+    /* Image preview - limit height on mobile */
+    #image-preview-left {
+        max-height: 200px !important;
+    }
+
+    /* Navigation buttons in preview */
+    #prev-image-btn-left,
+    #next-image-btn-left {
+        width: 2rem !important;
+        height: 2rem !important;
+    }
+
     /* Dropdown menus - ขยายให้กดง่าย */
     select {
         padding: 0.75rem 2rem 0.75rem 0.75rem !important;
