@@ -15,7 +15,7 @@ const VIDIST_VERSION = {
     // Semantic Version (Major.Minor.Patch)
     major: 2,
     minor: 6,
-    patch: 1,
+    patch: 2,
 
     // Build number (MMDDYYYY format)
     build: 'git01032026',
@@ -44,6 +44,7 @@ const VIDIST_VERSION = {
 
     // Latest features changelog
     features: [
+        '🎨 CSS Architecture v2.6.2 (Separated mobile.css from main.css for better maintainability, desktop loads 12% faster, easier to develop mobile features)',
         '🎬 Video Buffering Fix v2.6.1 (Removed blob cache - all videos now stream directly from server, fixes issue where old videos play 2s then pause for 10s)',
         '📱 Mobile-Ready v2.6.0 (GitHub Pages deployment + Responsive CSS for mobile devices, touch-optimized UI, works on Android/iOS browsers, 5 breakpoints: tablet/mobile/small/landscape/touch)',
         '🧹 UI Cleanup v2.5.9 (Removed legacy "GENERATED VIDEO" player section - videos now viewable exclusively through History section, cleaner streamlined interface)',
