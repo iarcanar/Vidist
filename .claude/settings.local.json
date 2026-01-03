@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(del \"TASKS.md\")",
+      "Bash(dir:*)",
+      "Bash(grep -rn \"pointerdown\\\\|pointerup\\\\|mousedown\\\\|mouseup\" \"d:\\\\for_back_home2026\\\\Vidist\\\\js\"\" --include=\"*.js \")",
+      "Bash(grep:*)",
+      "Bash(find:*)",
+      "Bash(awk:*)",
+      "Bash(grep -r \"localStorage\\\\|language\\\\|lang\" \"d:\\\\for_back_home2026\\\\Vidist\\\\js\"\" --include=\"*.js \")",
+      "Bash(cat:*)",
+      "Bash(ls:*)",
+      "Bash(move:*)",
+      "Bash(tree:*)",
+      "Bash(curl:*)",
+      "Bash(grep -rn \"edit\\\\|crop\\\\|canvas\\\\|draw\" \"d:\\\\for_back_home2026\\\\Vidist\\\\js\"\" --include=\"*.js \")",
+      "Bash(dir /B:*)",
+      "Bash(node -e:*)",
+      "Bash(git init:*)",
+      "Bash(move main.html index.html)",
+      "Bash(git add:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

@@ -1,0 +1,51 @@
+# VIDIST - Git Ignore Rules
+
+# ========== PROPRIETARY FILES ==========
+# DO NOT COMMIT THESE FILES TO PUBLIC REPOSITORIES
+PROPRIETARY_PROMPT_ENGINEERING.md
+CONFIDENTIAL_*
+*.secret
+
+# ========== API Keys & Sensitive Data ==========
+*.key
+*.token
+.env
+.env.local
+config/secrets.json
+
+# ========== Backup Files ==========
+backup/
+*.bak
+*.backup
+
+# ========== IDE & Editor ==========
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ========== OS Files ==========
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ========== Logs ==========
+*.log
+logs/
+
+# ========== Node Modules (if any) ==========
+node_modules/
+package-lock.json
+yarn.lock
+
+# ========== Build Output ==========
+dist/
+build/
+*.min.js
+*.min.css
+
+# ========== Temporary Files ==========
+tmp/
+temp/
+*.tmp
