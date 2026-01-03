@@ -2,6 +2,11 @@
    MOBILE RESPONSIVE DESIGN - v2.6.0
    ============================================================ */
 
+/* Desktop: Hide mobile-only elements */
+.mobile-only {
+    display: none;
+}
+
 /* Tablet breakpoint (768px - 1024px) */
 @media (max-width: 1024px) {
     /* ลดขนาด container */
@@ -24,12 +29,45 @@
 
 /* Mobile breakpoint (< 768px) */
 @media (max-width: 768px) {
-    /* Mobile branding - แสดง "- mobile" หลัง VIDIST */
-    h1.glitch.neon-text::after {
-        content: " - mobile";
+    /* Mobile branding - show/hide span */
+    .mobile-only {
+        display: inline !important;
         font-size: 0.6em;
         font-weight: 300;
         color: rgba(139, 92, 246, 0.7);
+    }
+
+    /* Force main container full width */
+    .max-w-7xl {
+        max-width: 100% !important;
+        padding: 0 0.5rem !important;
+    }
+
+    /* Force grid to 1 column + enable flexbox for ordering */
+    main > .grid {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 1rem !important;
+    }
+
+    /* All columns take full width */
+    .lg\:col-span-2,
+    .lg\:col-span-1 {
+        grid-column: span 1 !important;
+        width: 100% !important;
+        flex: 0 0 auto !important;
+    }
+
+    /* Prompt Craft section first */
+    .lg\:col-span-2 {
+        order: 1 !important;
+    }
+
+    /* History section second */
+    .lg\:col-span-1 {
+        order: 2 !important;
+        position: relative !important;
+        top: auto !important;
     }
 
     /* Typography - ขยายตัวอักษรให้อ่านง่าย */
@@ -84,10 +122,22 @@
     /* Modal - full screen บนมือถือ */
     #video-modal,
     #image-modal {
-        max-width: 100% !important;
-        max-height: 100% !important;
+        padding: 0 !important;
+    }
+
+    #video-modal > div,
+    #image-modal > div {
+        max-width: 100vw !important;
+        max-height: 100vh !important;
+        width: 100% !important;
+        height: 100% !important;
         margin: 0 !important;
         border-radius: 0 !important;
+    }
+
+    #modal-video-player,
+    #modal-image-full {
+        max-height: 100vh !important;
     }
 
     /* Navigation และ Header */
