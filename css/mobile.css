@@ -149,36 +149,103 @@
         gap: 0.5rem !important;
     }
 
-    /* Video Capacity Estimate - Compact mobile display */
-    header .cyber-card {
-        padding: 0.5rem !important;
-    }
-
-    header .cyber-card .flex.items-center.gap-4 {
+    /* Header sections - Horizontal compact cards */
+    header > div > div {
         flex-direction: column !important;
-        gap: 0.25rem !important;
-        align-items: flex-start !important;
+        gap: 0.5rem !important;
+        align-items: stretch !important;
     }
 
-    header .cyber-card .w-8.h-8 {
+    /* Balance section - 1 line horizontal */
+    header .cyber-card:has(#wavespeed-balance) {
+        padding: 0.5rem 0.75rem !important;
+    }
+
+    header .cyber-card:has(#wavespeed-balance) > div {
+        flex-direction: row !important;
+        align-items: center !important;
+        gap: 0.5rem !important;
+        justify-content: space-between !important;
+    }
+
+    header .cyber-card:has(#wavespeed-balance) svg {
         width: 1rem !important;
         height: 1rem !important;
     }
 
-    header .cyber-card svg {
+    header .cyber-card:has(#wavespeed-balance) .border-l {
+        border-left: 1px solid rgba(107, 114, 128, 0.3) !important;
+        padding-left: 0.5rem !important;
+        margin-left: 0.5rem !important;
+    }
+
+    header .cyber-card:has(#wavespeed-balance) p {
+        font-size: 0.625rem !important;
+        line-height: 1 !important;
+    }
+
+    header .cyber-card:has(#wavespeed-balance) #wavespeed-balance {
+        font-size: 1rem !important;
+    }
+
+    header .cyber-card:has(#wavespeed-balance) a {
+        padding: 0.375rem 0.5rem !important;
+        font-size: 0.625rem !important;
+    }
+
+    header .cyber-card:has(#wavespeed-balance) a img {
+        width: 0.875rem !important;
+        height: 0.875rem !important;
+    }
+
+    /* Estimate section - 1 line inline */
+    header .cyber-card:has(#estimate-5sec) {
+        padding: 0.5rem 0.75rem !important;
+    }
+
+    header .cyber-card:has(#estimate-5sec) > div {
+        flex-direction: row !important;
+        align-items: center !important;
+        gap: 0.5rem !important;
+        flex-wrap: nowrap !important;
+    }
+
+    header .cyber-card:has(#estimate-5sec) .w-8.h-8 {
+        width: 1rem !important;
+        height: 1rem !important;
+        flex-shrink: 0 !important;
+    }
+
+    header .cyber-card:has(#estimate-5sec) svg {
         width: 0.75rem !important;
         height: 0.75rem !important;
     }
 
-    header .cyber-card .border-l {
+    header .cyber-card:has(#estimate-5sec) .border-l {
         border-left: none !important;
         padding-left: 0 !important;
-        margin-top: 0.25rem !important;
+        margin-left: 0 !important;
+        margin-top: 0 !important;
     }
 
-    header .cyber-card .text-right {
-        display: inline-block !important;
-        margin-right: 0.5rem !important;
+    header .cyber-card:has(#estimate-5sec) p {
+        font-size: 0.625rem !important;
+        line-height: 1.2 !important;
+        margin: 0 !important;
+    }
+
+    header .cyber-card:has(#estimate-5sec) .text-right {
+        display: inline-flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        gap: 0.25rem !important;
+        margin-right: 0 !important;
+    }
+
+    header .cyber-card:has(#estimate-5sec) #estimate-5sec,
+    header .cyber-card:has(#estimate-5sec) #estimate-10sec {
+        font-size: 0.875rem !important;
+        font-weight: 700 !important;
     }
 
     /* Panel overflow fixes */
@@ -239,6 +306,38 @@
     select {
         padding: 0.75rem 2rem 0.75rem 0.75rem !important;
         background-size: 1.5rem !important;
+    }
+
+    /* Textarea resize handles - larger for mobile touch */
+    textarea {
+        resize: vertical !important; /* Only vertical resize */
+        position: relative !important;
+    }
+
+    /* Make resize handle area larger and more visible */
+    textarea::after {
+        content: '' !important;
+        position: absolute !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        width: 40px !important;
+        height: 40px !important;
+        cursor: ns-resize !important;
+        background: linear-gradient(135deg, transparent 0%, transparent 60%, rgba(139, 92, 246, 0.3) 60%) !important;
+    }
+
+    /* Alternative: Add visual indicator for resize */
+    #prompt,
+    #negative-prompt,
+    #prompt-craft-input {
+        background-image:
+            linear-gradient(135deg, transparent 0px, transparent calc(100% - 20px), rgba(139, 92, 246, 0.4) calc(100% - 20px)),
+            linear-gradient(135deg, transparent 0px, transparent calc(100% - 12px), rgba(139, 92, 246, 0.3) calc(100% - 12px)),
+            linear-gradient(135deg, transparent 0px, transparent calc(100% - 4px), rgba(139, 92, 246, 0.2) calc(100% - 4px)) !important;
+        background-repeat: no-repeat !important;
+        background-position: bottom right !important;
+        background-size: 40px 40px !important;
+        padding-bottom: 3rem !important; /* Extra space for resize handle */
     }
 
     /* Hide desktop-only elements */
