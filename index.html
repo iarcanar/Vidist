@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!--
 ╔═══════════════════════════════════════════════════════════════════════════╗
-║ VIDIST v2.6.9 - Precision Creative Engine                                ║
+║ VIDIST v2.6.10 - Precision Creative Engine                               ║
 ║ Build: git01042026                                                        ║
 ║ ⚠️ WARNING: Update version to match js/version.js when modifying!        ║
 ║ AI-Powered Prompt & Video Crafting Platform                              ║
@@ -60,7 +60,7 @@ Previous Releases:
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#1a1a2e">
-    <title>VIDIST v2.6.9 - Precision Creative Engine</title>
+    <title>VIDIST v2.6.10 - Precision Creative Engine</title>
     <link rel="icon" type="image/x-icon" href="assets/VIDIST_ICO.ico?v=2">
     <link rel="shortcut icon" type="image/x-icon" href="assets/VIDIST_ICO.ico?v=2">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -3446,6 +3446,13 @@ Previous Releases:
             } else {
                 apiKeyInput_ws.value = "8b38b923fa7e69a1524860b910ea93683df0dbbf1ddfb74eb46bc18298d05d48"; // Set default if empty
                 localStorage.setItem('wavespeed_api_key', apiKeyInput_ws.value);
+            }
+
+            // Load Gemini API key from localStorage
+            const savedApiKey_gemini = localStorage.getItem('gemini_api_key');
+            if (savedApiKey_gemini) {
+                const apiKeyInput_gemini = document.getElementById('api-key-gemini');
+                apiKeyInput_gemini.value = savedApiKey_gemini;
             }
 
             fetchUsageStats_Wavespeed(); // โหลด Wavespeed balance เมื่อเปิดหน้า

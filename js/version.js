@@ -15,7 +15,7 @@ const VIDIST_VERSION = {
     // Semantic Version (Major.Minor.Patch)
     major: 2,
     minor: 6,
-    patch: 9,
+    patch: 10,
 
     // Build number (MMDDYYYY format)
     build: 'git01042026',
@@ -44,6 +44,7 @@ const VIDIST_VERSION = {
 
     // Latest features changelog
     features: [
+        '🔧 API Key Restoration Fix v2.6.10 (Fixed Gemini API key not appearing after browser refresh - added missing localStorage restoration code on page startup)',
         '💾 API Key Persistence v2.6.9 (Added explicit Save buttons for API keys with visual feedback, improved localStorage persistence message, mobile UI fixes: removed logo border glow, widened stats bar to prevent Wavespeed icon cutoff)',
         '💎 Unified Stats Bar v2.6.8 (Merged Balance+Estimates+Topup into single row with dividers, clean professional look, works on both Desktop and Mobile)',
         '🧹 Header Cleanup v2.6.7 (Simplified CSS selectors to properly target HTML structure, Balance+Topup in one card, Estimate below, fixed compression issues)',
