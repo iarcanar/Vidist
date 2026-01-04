@@ -1601,11 +1601,10 @@ Previous Releases:
         console.log('✅ Centralized state initialized. Run debugAppState() to inspect.');
         // ========== End of Centralized State ==========
 
-        // ========== START: Task Input Map System ==========
-        // Global state สำหรับเก็บ task inputs (workaround สำหรับ API ที่ไม่ส่ง input กลับมา)
-        const taskInputMap = new Map(
-            JSON.parse(localStorage.getItem('taskInputMap') || '[]')
-        );
+        // ========== REMOVED: Old Task Input Map System ==========
+        // Now using TaskPersistence with 'vidist_task_inputs_v2' storage key
+        // Migration from old system happens automatically at line 3008
+        // ==========================================================
 
         // ========== START: Smart Storage Management System ==========
         const STORAGE_LIMITS = {
@@ -2990,19 +2989,19 @@ Previous Releases:
         };
 
         // Global functions for backward compatibility / easy access
-        // Definition check to avoid conflicts if they somehow exist
-        if (typeof window.saveTaskInput === 'undefined') {
-            window.saveTaskInput = (id, data) => TaskPersistence.save(id, data);
-        } else {
-            console.warn('saveTaskInput already defined, overwriting implementation');
-            window.saveTaskInput = (id, data) => TaskPersistence.save(id, data);
+        // CRITICAL: Define as regular functions (not just window properties)
+        // because code calls saveTaskInput() directly at lines 5484, 6263
+        function saveTaskInput(id, data) {
+            return TaskPersistence.save(id, data);
         }
 
-        if (typeof window.getTaskInput === 'undefined') {
-            window.getTaskInput = (id) => TaskPersistence.get(id);
-        } else {
-            window.getTaskInput = (id) => TaskPersistence.get(id);
+        function getTaskInput(id) {
+            return TaskPersistence.get(id);
         }
+
+        // Also expose on window for explicit access
+        window.saveTaskInput = saveTaskInput;
+        window.getTaskInput = getTaskInput;
 
         // Run migration on startup
         TaskPersistence.migrateFromOld();
