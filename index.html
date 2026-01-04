@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!--
 ╔═══════════════════════════════════════════════════════════════════════════╗
-║ VIDIST v2.7.2 - Precision Creative Engine                                ║
+║ VIDIST v2.7.3 - Precision Creative Engine                                ║
 ║ Build: git01042026                                                        ║
 ║ ⚠️ WARNING: Update version to match js/version.js when modifying!        ║
 ║ AI-Powered Prompt & Video Crafting Platform                              ║
@@ -60,7 +60,7 @@ Previous Releases:
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#1a1a2e">
-    <title>VIDIST v2.7.2 - Precision Creative Engine</title>
+    <title>VIDIST v2.7.3 - Precision Creative Engine</title>
     <link rel="icon" type="image/x-icon" href="assets/VIDIST_ICO.ico?v=2">
     <link rel="shortcut icon" type="image/x-icon" href="assets/VIDIST_ICO.ico?v=2">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -74,38 +74,54 @@ Previous Releases:
 <body class="cyber-grid">
     <!-- Header -->
     <header class="relative z-10 border-b border-purple-500/20">
-        <div class="max-w-7xl mx-auto px-4 py-4">
-            <div class="flex items-center justify-between gap-6">
-                <!-- Logo Section (Left) -->
-                <div class="flex items-center gap-4">
-                    <div class="w-12 h-12 rounded-lg overflow-hidden neon-border pulse-glow"
+        <div class="max-w-7xl mx-auto px-4 py-3 sm:py-4">
+            <!-- Two-row flex container on mobile, single row on desktop -->
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-4 sm:gap-6">
+
+                <!-- Row 1: Logo + Name + Version -->
+                <div class="flex items-center gap-3 sm:gap-4 w-full sm:w-auto justify-center sm:justify-start">
+                    <!-- Logo (48x48 desktop, 40x40 mobile) -->
+                    <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-lg overflow-hidden neon-border pulse-glow"
                         style="box-shadow: 0 0 20px rgba(168, 85, 247, 0.4);">
                         <img src="assets/VIDIST_LOGO.png" alt="VIDIST Logo" class="w-full h-full object-cover">
                     </div>
-                    <div>
-                        <h1 class="text-3xl font-bold glitch neon-text" data-text="VIDIST">VIDIST<span class="mobile-only"> - mobile</span> <span
-                                class="text-sm font-light text-purple-400" id="version-display">v2.7.2</span></h1>
-                        <p class="text-xs text-cyan-400 neon-text-cyan tracking-wider">PRECISION CREATIVE ENGINE <span
-                                class="text-[10px] text-gray-500" id="build-display">build git01042026</span></p>
+
+                    <!-- Name + Version Section -->
+                    <div class="text-center sm:text-left">
+                        <!-- Title: VIDIST v2.7.3 -->
+                        <h1 class="text-2xl sm:text-3xl font-bold glitch neon-text inline-flex items-baseline gap-2" data-text="VIDIST">
+                            <span>VIDIST<span class="mobile-only"> - mobile</span></span>
+                            <span class="text-sm sm:text-base font-light text-purple-400" id="version-display">v2.7.3</span>
+                        </h1>
+
+                        <!-- Subtitle: PRECISION CREATIVE ENGINE build... -->
+                        <p class="text-[11px] sm:text-xs text-cyan-400 neon-text-cyan tracking-wider mt-0.5">
+                            PRECISION CREATIVE ENGINE
+                            <span class="hidden sm:inline text-[10px] text-gray-500 ml-2" id="build-display">build git01042026</span>
+                        </p>
                     </div>
                 </div>
 
-                <!-- Credit Balance -->
-                <div class="cyber-card rounded-xl px-4 py-2 no-hover">
-                    <div class="flex items-center gap-3 justify-center">
-                        <div class="flex flex-col items-center">
-                            <span class="text-xs text-gray-400 uppercase tracking-wider">Credit Balance</span>
-                            <span class="text-2xl font-bold neon-text-cyan" id="credit_balance">$-.---</span>
-                        </div>
-                        <a href="https://wavespeed.ai/top-up" target="_blank"
-                            class="px-2 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-700 border border-cyan-500 hover:border-cyan-400 transition-all text-white text-xs font-semibold uppercase tracking-wide flex items-center gap-1.5">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                            </svg>
-                            <span>Top Up</span>
-                        </a>
-                    </div>
-                </div>
+                <!-- Row 2: Balance + Top Up Combined Button -->
+                <a href="https://wavespeed.ai/top-up" target="_blank"
+                   class="balance-topup-button w-full sm:w-auto min-w-[140px] px-6 py-3 rounded-xl
+                          bg-gradient-to-r from-cyan-600 to-cyan-700 hover:from-cyan-500 hover:to-cyan-600
+                          border-2 border-cyan-400/50 hover:border-cyan-300
+                          transition-all duration-200 transform hover:scale-105
+                          shadow-lg hover:shadow-cyan-500/50
+                          flex flex-col items-center justify-center gap-1
+                          cursor-pointer touch-target">
+
+                    <!-- Balance Amount (Large) -->
+                    <span class="text-xl sm:text-2xl font-bold text-white neon-text-cyan leading-none" id="credit_balance">
+                        $-.---
+                    </span>
+
+                    <!-- TOP UP Label (Small) -->
+                    <span class="text-[10px] sm:text-xs text-cyan-100 font-semibold uppercase tracking-widest">
+                        TOP UP
+                    </span>
+                </a>
             </div>
         </div>
     </header>

@@ -1384,3 +1384,30 @@ input[value="img"] + div:hover {
     background: rgba(236, 72, 153, 0.05);
 }
 
+/* ========== Balance + Top Up Combined Button ========== */
+.balance-topup-button {
+    min-height: 44px; /* Touch target minimum */
+    position: relative;
+    overflow: hidden;
+}
+
+.balance-topup-button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+    transition: left 0.5s;
+}
+
+.balance-topup-button:hover::before {
+    left: 100%;
+}
+
+/* Touch target class for accessibility */
+.touch-target {
+    min-height: 44px;
+    min-width: 44px;
+}
