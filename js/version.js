@@ -15,7 +15,7 @@ const VIDIST_VERSION = {
     // Semantic Version (Major.Minor.Patch)
     major: 2,
     minor: 7,
-    patch: 1,
+    patch: 2,
 
     // Build number (MMDDYYYY format)
     build: 'git01042026',
@@ -44,6 +44,7 @@ const VIDIST_VERSION = {
 
     // Latest features changelog
     features: [
+        '🔄 Complete History Management System v2.7.2 (Auto-resume polling after page refresh, Retry/Recovery buttons for stuck/failed videos with time-based display (5min/30min thresholds), Legacy data migration with intelligent model key guessing, Smart API sync preserving local data (prompts/settings) while updating status/URLs, Advanced search/filter/sort UI, Export history to JSON/CSV, Increased prompt display to 150 chars with tooltips)',
         '🔧 History Prompt Persistence Fix v2.7.1 (Fixed "No prompt available" issue - removed dual storage conflict, unified to TaskPersistence system with 300-item/7-day retention, timestamp-based cleanup, automatic migration from old data)',
         '💰 Credit Balance Redesign v2.7.0 (Simplified balance display - renamed to "Credit Balance" with 3 decimal precision, removed video estimates, cleaner centered layout with icon and Top Up button)',
         '🔧 API Key Restoration Fix v2.6.10 (Fixed Gemini API key not appearing after browser refresh - added missing localStorage restoration code on page startup)',
