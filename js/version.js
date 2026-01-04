@@ -15,7 +15,7 @@ const VIDIST_VERSION = {
     // Semantic Version (Major.Minor.Patch)
     major: 2,
     minor: 7,
-    patch: 3,
+    patch: 4,
 
     // Build number (MMDDYYYY format)
     build: 'git01042026',
@@ -44,6 +44,7 @@ const VIDIST_VERSION = {
 
     // Latest features changelog
     features: [
+        '🗑️ Delete Button v2.7.4 (Added delete button to all history cards - Processing/Image/Video, permanently deletes from both local storage and Wavespeed server API, bilingual confirmation dialog, red gradient styling with trash icon, bottom-right position on Image/Video cards, bottom-left on Processing cards, graceful error handling for API failures)',
         '🎨 Header Redesign v2.7.3 (Two-row responsive layout for mobile, combined Balance+TopUp button with 2-line display, improved typography hierarchy with consistent scaling, 44px minimum touch targets for accessibility, desktop-only build number to reduce clutter, shimmer hover effect on button)',
         '🔄 Complete History Management System v2.7.2 (Auto-resume polling after page refresh, Retry/Recovery buttons for stuck/failed videos with time-based display (5min/30min thresholds), Legacy data migration with intelligent model key guessing, Smart API sync preserving local data (prompts/settings) while updating status/URLs, Advanced search/filter/sort UI, Export history to JSON/CSV, Increased prompt display to 150 chars with tooltips)',
         '🔧 History Prompt Persistence Fix v2.7.1 (Fixed "No prompt available" issue - removed dual storage conflict, unified to TaskPersistence system with 300-item/7-day retention, timestamp-based cleanup, automatic migration from old data)',
