@@ -75,50 +75,50 @@ Previous Releases:
     <!-- Header -->
     <header class="relative z-10 border-b border-purple-500/20">
         <div class="max-w-7xl mx-auto px-4 py-3 sm:py-4">
-            <!-- Two-row flex container on mobile, single row on desktop -->
-            <div class="flex flex-col sm:flex-row items-center justify-between gap-4 sm:gap-6">
+            <!-- Single row horizontal layout on all screens -->
+            <div class="flex flex-row items-center justify-between gap-3 sm:gap-6">
 
-                <!-- Row 1: Logo + Name + Version -->
-                <div class="flex items-center gap-3 sm:gap-4 w-full sm:w-auto justify-center sm:justify-start">
-                    <!-- Logo (48x48 desktop, 40x40 mobile) -->
-                    <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-lg overflow-hidden neon-border pulse-glow"
+                <!-- Left: Logo + Name + Version -->
+                <div class="flex items-center gap-3 sm:gap-4 justify-start">
+                    <!-- Logo (32px mobile, 48px desktop) -->
+                    <div class="w-8 h-8 sm:w-12 sm:h-12 rounded-lg overflow-hidden neon-border pulse-glow"
                         style="box-shadow: 0 0 20px rgba(168, 85, 247, 0.4);">
                         <img src="assets/VIDIST_LOGO.png" alt="VIDIST Logo" class="w-full h-full object-cover">
                     </div>
 
                     <!-- Name + Version Section -->
-                    <div class="text-center sm:text-left">
+                    <div class="text-left">
                         <!-- Title: VIDIST v2.7.3 -->
-                        <h1 class="text-2xl sm:text-3xl font-bold glitch neon-text inline-flex items-baseline gap-2" data-text="VIDIST">
+                        <h1 class="text-lg sm:text-3xl font-bold glitch neon-text inline-flex items-baseline gap-1.5 sm:gap-2" data-text="VIDIST">
                             <span>VIDIST<span class="mobile-only"> - mobile</span></span>
-                            <span class="text-sm sm:text-base font-light text-purple-400" id="version-display">v2.7.3</span>
+                            <span class="text-xs sm:text-base font-light text-purple-400" id="version-display">v2.7.3</span>
                         </h1>
 
                         <!-- Subtitle: PRECISION CREATIVE ENGINE build... -->
-                        <p class="text-[11px] sm:text-xs text-cyan-400 neon-text-cyan tracking-wider mt-0.5">
+                        <p class="text-[9px] sm:text-xs text-cyan-400 neon-text-cyan tracking-wider mt-0.5">
                             PRECISION CREATIVE ENGINE
                             <span class="hidden sm:inline text-[10px] text-gray-500 ml-2" id="build-display">build git01042026</span>
                         </p>
                     </div>
                 </div>
 
-                <!-- Row 2: Balance + Top Up Combined Button -->
+                <!-- Right: Compact Balance + Top Up Button -->
                 <a href="https://wavespeed.ai/top-up" target="_blank"
-                   class="balance-topup-button w-full sm:w-auto min-w-[140px] px-6 py-3 rounded-xl
+                   class="balance-topup-button min-w-[70px] sm:min-w-[100px] px-2.5 py-1.5 sm:px-4 sm:py-2.5 rounded-lg sm:rounded-xl
                           bg-gradient-to-r from-cyan-600 to-cyan-700 hover:from-cyan-500 hover:to-cyan-600
                           border-2 border-cyan-400/50 hover:border-cyan-300
                           transition-all duration-200 transform hover:scale-105
                           shadow-lg hover:shadow-cyan-500/50
-                          flex flex-col items-center justify-center gap-1
-                          cursor-pointer touch-target">
+                          flex flex-col items-center justify-center gap-0.5
+                          cursor-pointer touch-target flex-shrink-0">
 
-                    <!-- Balance Amount (Large) -->
-                    <span class="text-xl sm:text-2xl font-bold text-white neon-text-cyan leading-none" id="credit_balance">
+                    <!-- Balance Amount -->
+                    <span class="text-sm sm:text-xl font-bold text-white neon-text-cyan leading-none" id="credit_balance">
                         $-.---
                     </span>
 
-                    <!-- TOP UP Label (Small) -->
-                    <span class="text-[10px] sm:text-xs text-cyan-100 font-semibold uppercase tracking-widest">
+                    <!-- TOP UP Label -->
+                    <span class="text-[8px] sm:text-[10px] text-cyan-100 font-semibold uppercase tracking-wider">
                         TOP UP
                     </span>
                 </a>

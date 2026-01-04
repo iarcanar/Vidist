@@ -172,19 +172,19 @@
         font-size: 0.625rem !important; /* 10px (ลดจาก 12px) */
     }
 
-    /* Balance Button - Mobile specific */
+    /* Balance Button - Mobile: Compact size */
     .balance-topup-button {
-        min-width: 100% !important;
-        padding: 0.875rem 1.5rem !important; /* Larger touch area */
+        min-width: 70px !important;
+        padding: 0.4rem 0.6rem !important;
     }
 
     .balance-topup-button span:first-child {
-        font-size: 1.5rem !important; /* Balance: 24px */
+        font-size: 0.875rem !important; /* Balance: 14px */
     }
 
     .balance-topup-button span:last-child {
-        font-size: 0.625rem !important; /* TOP UP: 10px */
-        letter-spacing: 0.1em !important;
+        font-size: 0.5rem !important; /* TOP UP: 8px */
+        letter-spacing: 0.05em !important;
     }
 
     /* Panel overflow fixes */
@@ -299,16 +299,25 @@
 
     /* Extra small mobile - Header adjustments */
     header h1 {
-        font-size: 1.125rem !important; /* 18px */
+        font-size: 1rem !important; /* 16px */
     }
 
-    header .w-10 {
-        width: 2rem !important;  /* 32px */
-        height: 2rem !important;
+    header .w-8 {
+        width: 1.75rem !important;  /* 28px */
+        height: 1.75rem !important;
+    }
+
+    .balance-topup-button {
+        min-width: 60px !important;
+        padding: 0.3rem 0.5rem !important;
     }
 
     .balance-topup-button span:first-child {
-        font-size: 1.25rem !important; /* Balance: 20px */
+        font-size: 0.75rem !important; /* Balance: 12px */
+    }
+
+    .balance-topup-button span:last-child {
+        font-size: 7px !important; /* TOP UP: 7px */
     }
 
     /* Compact status badges */
