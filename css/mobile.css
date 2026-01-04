@@ -172,19 +172,21 @@
         font-size: 0.625rem !important; /* 10px (ลดจาก 12px) */
     }
 
-    /* Balance Button - Mobile: Compact size */
+    /* Balance Button - Mobile: Fixed compact size */
     .balance-topup-button {
-        min-width: 70px !important;
-        padding: 0.4rem 0.6rem !important;
+        width: 75px !important;
+        max-width: 75px !important;
+        min-width: 75px !important;
+        padding: 0.375rem 0.5rem !important;
     }
 
     .balance-topup-button span:first-child {
-        font-size: 0.875rem !important; /* Balance: 14px */
+        font-size: 0.75rem !important; /* Balance: 12px */
     }
 
     .balance-topup-button span:last-child {
-        font-size: 0.5rem !important; /* TOP UP: 8px */
-        letter-spacing: 0.05em !important;
+        font-size: 7px !important; /* TOP UP: 7px */
+        letter-spacing: 0.03em !important;
     }
 
     /* Panel overflow fixes */
@@ -308,16 +310,18 @@
     }
 
     .balance-topup-button {
-        min-width: 60px !important;
-        padding: 0.3rem 0.5rem !important;
+        width: 65px !important;
+        max-width: 65px !important;
+        min-width: 65px !important;
+        padding: 0.3rem 0.4rem !important;
     }
 
     .balance-topup-button span:first-child {
-        font-size: 0.75rem !important; /* Balance: 12px */
+        font-size: 0.65rem !important; /* Balance: 10.4px */
     }
 
     .balance-topup-button span:last-child {
-        font-size: 7px !important; /* TOP UP: 7px */
+        font-size: 6px !important; /* TOP UP: 6px */
     }
 
     /* Compact status badges */
