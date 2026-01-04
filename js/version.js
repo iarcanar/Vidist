@@ -15,7 +15,7 @@ const VIDIST_VERSION = {
     // Semantic Version (Major.Minor.Patch)
     major: 2,
     minor: 6,
-    patch: 7,
+    patch: 8,
 
     // Build number (MMDDYYYY format)
     build: 'git01032026',
@@ -44,6 +44,7 @@ const VIDIST_VERSION = {
 
     // Latest features changelog
     features: [
+        '💎 Unified Stats Bar v2.6.8 (Merged Balance+Estimates+Topup into single row with dividers, clean professional look, works on both Desktop and Mobile)',
         '🧹 Header Cleanup v2.6.7 (Simplified CSS selectors to properly target HTML structure, Balance+Topup in one card, Estimate below, fixed compression issues)',
         '💎 Single-Row Header v2.6.6 (Balance + Estimates merged into one row with equal-width cards, cyan coin icon theme, 50% space saved, topup button repositioned)',
         '🎨 Header & Touch UX v2.6.5 (Redesigned header sections to horizontal 1-line compact cards, added large 40x40px touch-friendly resize handles with visual gradient indicators on all textareas)',

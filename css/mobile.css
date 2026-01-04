@@ -149,92 +149,51 @@
         gap: 0.5rem !important;
     }
 
-    /* Header sections - Stack vertically */
-    header > div > div {
-        flex-direction: column !important;
-        gap: 0.5rem !important;
-        align-items: stretch !important;
-    }
-
-    /* Balance + Topup card */
+    /* Unified Stats Bar - Mobile */
     .cyber-card:has(#wavespeed-balance) {
         padding: 0.5rem 0.75rem !important;
-        margin-right: 0 !important;
     }
 
     .cyber-card:has(#wavespeed-balance) > .flex {
         gap: 0.5rem !important;
+        flex-wrap: nowrap !important;
     }
 
-    /* Balance icon - compact */
-    .cyber-card:has(#wavespeed-balance) .w-9 {
-        width: 1.25rem !important;
-        height: 1.25rem !important;
-    }
-
-    .cyber-card:has(#wavespeed-balance) .w-9 svg {
-        width: 0.875rem !important;
-        height: 0.875rem !important;
-    }
-
-    /* Hide balance label */
-    .cyber-card:has(#wavespeed-balance) .text-xs.text-gray-400 {
+    /* Hide balance icon on mobile */
+    .cyber-card:has(#wavespeed-balance) .w-6 {
         display: none !important;
     }
 
-    /* Balance amount */
+    /* Compact balance */
     .cyber-card:has(#wavespeed-balance) #wavespeed-balance {
-        font-size: 1rem !important;
+        font-size: 0.875rem !important;
     }
 
-    /* Topup button - compact */
-    .cyber-card:has(#wavespeed-balance) .border-l {
-        padding-left: 0.5rem !important;
-        margin-left: auto !important;
+    /* Compact estimates */
+    .cyber-card:has(#wavespeed-balance) #estimate-5sec,
+    .cyber-card:has(#wavespeed-balance) #estimate-10sec {
+        font-size: 0.75rem !important;
     }
 
-    .cyber-card:has(#wavespeed-balance) a {
-        padding: 0.375rem 0.625rem !important;
+    .cyber-card:has(#wavespeed-balance) .text-xs.text-gray-400 {
         font-size: 0.625rem !important;
-        gap: 0.375rem !important;
+    }
+
+    /* Compact topup */
+    .cyber-card:has(#wavespeed-balance) a {
+        padding: 0.25rem 0.5rem !important;
+        font-size: 0.625rem !important;
+        gap: 0.25rem !important;
     }
 
     .cyber-card:has(#wavespeed-balance) a img {
-        width: 0.875rem !important;
-        height: 0.875rem !important;
+        width: 0.75rem !important;
+        height: 0.75rem !important;
     }
 
-    /* Quick Estimate section */
-    .flex:has(.cyber-card:has(#estimate-5sec)) {
-        margin-right: 0 !important;
-    }
-
-    .cyber-card:has(#estimate-5sec) {
-        padding: 0.5rem 0.75rem !important;
-    }
-
-    .cyber-card:has(#estimate-5sec) > .flex {
-        gap: 0.5rem !important;
-    }
-
-    /* Hide calculator icon */
-    .cyber-card:has(#estimate-5sec) .w-8 {
-        display: none !important;
-    }
-
-    /* Estimate labels - compact */
-    .cyber-card:has(#estimate-5sec) .text-\[10px\] {
-        font-size: 0.5rem !important;
-    }
-
-    .cyber-card:has(#estimate-5sec) .text-xs.text-gray-300 {
-        font-size: 0.625rem !important;
-    }
-
-    /* Estimate values */
-    .cyber-card:has(#estimate-5sec) #estimate-5sec,
-    .cyber-card:has(#estimate-5sec) #estimate-10sec {
-        font-size: 0.875rem !important;
+    /* Hide dividers on very small screens */
+    .cyber-card:has(#wavespeed-balance) .h-6.w-px {
+        height: 1rem !important;
     }
 
     /* Panel overflow fixes */
