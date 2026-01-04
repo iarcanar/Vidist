@@ -6721,17 +6721,19 @@ Previous Releases:
                             id: id,
                             // ✨ Use API URL if available, otherwise preserve local URL (prevent thumbnail revert)
                             url: videoUrl || existingItem?.url || null,
-                            // ✨ ใช้ saved input ก่อน, fallback API, fallback default
-                            prompt: savedInput?.prompt || apiItem.input?.prompt || "No prompt available",
-                            negativePrompt: savedInput?.negativePrompt || apiItem.input?.negative_prompt || '',
+                            // ✨ FIXED: Wavespeed API returns fields at top level, not under .input
+                            prompt: savedInput?.prompt || apiItem.prompt || "No prompt available",
+                            negativePrompt: savedInput?.negativePrompt || apiItem.negative_prompt || '',
                             model: savedInput?.model || modelName || 'unknown',
                             modelKey: savedInput?.modelKey || existingItem?.modelKey || null, // ✨ รักษา modelKey
                             outputType: outputType,  // ✨ NEW: Include outputType (v2.4.2)
                             provider: 'wavespeed',
-                            duration: savedInput?.duration || apiItem.input?.duration || 0,
-                            resolution: savedInput?.resolution || apiItem.input?.resolution || 'N/A',
-                            shotType: savedInput?.shotType || apiItem.input?.shot_type || null,
-                            promptExpansion: savedInput?.promptExpansion || false,
+                            duration: savedInput?.duration || apiItem.duration || 0,
+                            resolution: savedInput?.resolution || apiItem.resolution || 'N/A',
+                            shotType: savedInput?.shotType || apiItem.shot_type || null,
+                            promptExpansion: savedInput?.promptExpansion || apiItem.enable_prompt_expansion || false,
+                            seed: savedInput?.seed || apiItem.seed || null,
+                            sourceImage: savedInput?.sourceImage || apiItem.image || null,
                             createdAt: apiItem.created_at || new Date().toISOString(),
                             processingTime: apiItem.metrics?.predict_time || (apiItem.timings?.inference ? apiItem.timings.inference / 1000 : 0),
                             status: status,
