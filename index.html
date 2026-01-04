@@ -3583,10 +3583,8 @@ Previous Releases:
             const savedApiKey_ws = localStorage.getItem('wavespeed_api_key');
             if (savedApiKey_ws) {
                 apiKeyInput_ws.value = savedApiKey_ws;
-            } else {
-                apiKeyInput_ws.value = "8b38b923fa7e69a1524860b910ea93683df0dbbf1ddfb74eb46bc18298d05d48"; // Set default if empty
-                localStorage.setItem('wavespeed_api_key', apiKeyInput_ws.value);
             }
+            // ⚠️ SECURITY: Never hardcode API keys - users must enter their own
 
             // Load Gemini API key from localStorage
             const savedApiKey_gemini = localStorage.getItem('gemini_api_key');
