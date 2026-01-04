@@ -173,34 +173,24 @@
     }
 
     /* Compact credit balance display */
-    .cyber-card:has(#credit_balance) .w-8 {
-        width: 1.5rem !important;
-        height: 1.5rem !important;
-    }
-
-    .cyber-card:has(#credit_balance) .w-8 svg {
-        width: 1rem !important;
-        height: 1rem !important;
-    }
-
     .cyber-card:has(#credit_balance) #credit_balance {
-        font-size: 1rem !important;
+        font-size: 1.1rem !important;
     }
 
     .cyber-card:has(#credit_balance) .text-xs {
-        font-size: 0.5rem !important;
+        font-size: 0.55rem !important;
     }
 
     /* Compact topup button */
     .cyber-card:has(#credit_balance) a {
-        padding: 0.4rem 0.6rem !important;
-        font-size: 0.6rem !important;
-        gap: 0.3rem !important;
+        padding: 0.3rem 0.5rem !important;
+        font-size: 0.55rem !important;
+        gap: 0.25rem !important;
     }
 
     .cyber-card:has(#credit_balance) a svg {
-        width: 0.75rem !important;
-        height: 0.75rem !important;
+        width: 0.65rem !important;
+        height: 0.65rem !important;
     }
 
     /* Panel overflow fixes */
