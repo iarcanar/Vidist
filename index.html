@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!--
 ╔═══════════════════════════════════════════════════════════════════════════╗
-║ VIDIST v2.7.0 - Precision Creative Engine                                ║
+║ VIDIST v2.7.1 - Precision Creative Engine                                ║
 ║ Build: git01042026                                                        ║
 ║ ⚠️ WARNING: Update version to match js/version.js when modifying!        ║
 ║ AI-Powered Prompt & Video Crafting Platform                              ║
@@ -60,7 +60,7 @@ Previous Releases:
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#1a1a2e">
-    <title>VIDIST v2.7.0 - Precision Creative Engine</title>
+    <title>VIDIST v2.7.1 - Precision Creative Engine</title>
     <link rel="icon" type="image/x-icon" href="assets/VIDIST_ICO.ico?v=2">
     <link rel="shortcut icon" type="image/x-icon" href="assets/VIDIST_ICO.ico?v=2">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -1668,14 +1668,7 @@ Previous Releases:
                     }
                 }
 
-                // 3. เก็บ taskInputMap แค่ 30 รายการล่าสุด
-                if (taskInputMap.size > 30) {
-                    const entries = Array.from(taskInputMap.entries());
-                    taskInputMap.clear();
-                    entries.slice(-30).forEach(([k, v]) => taskInputMap.set(k, v));
-                    localStorage.setItem('taskInputMap', JSON.stringify(Array.from(taskInputMap)));
-                    console.log(`✅ Reduced taskInputMap to ${taskInputMap.size} items`);
-                }
+                // 3. REMOVED: Old taskInputMap cleanup (now using TaskPersistence with 7-day retention)
 
                 // 4. ลบ prompt cache เก่า
                 localStorage.removeItem('vidist_last_prompt');
@@ -2008,26 +2001,10 @@ Previous Releases:
         }
         // ========== END: KEEP System ==========
 
-        // Helper function: บันทึก task input (ใช้ safe version)
-        function saveTaskInput(taskId, inputData) {
-            taskInputMap.set(taskId, inputData);
-
-            // เก็บแค่ 50 tasks ล่าสุด (ลดจาก 200)
-            if (taskInputMap.size > STORAGE_LIMITS.TASK_INPUT_MAP_MAX) {
-                const entries = Array.from(taskInputMap.entries());
-                taskInputMap.clear();
-                entries.slice(-STORAGE_LIMITS.TASK_INPUT_MAP_MAX).forEach(([k, v]) => taskInputMap.set(k, v));
-                console.log(`🧹 Auto-trimmed taskInputMap to ${STORAGE_LIMITS.TASK_INPUT_MAP_MAX} items`);
-            }
-
-            // ใช้ safe version
-            safeSetLocalStorage('taskInputMap', JSON.stringify(Array.from(taskInputMap)));
-        }
-
-        // Helper function: ดึง task input
-        function getTaskInput(taskId) {
-            return taskInputMap.get(taskId);
-        }
+        // ========== DEPRECATED: Old saveTaskInput/getTaskInput removed ==========
+        // Now using TaskPersistence system (see lines 2915-2962)
+        // Old taskInputMap approach had 30-50 item limit causing prompt loss
+        // ==========================================================================
 
         // ========== NEW: Capture Prompt Craft Data ==========
         /**
@@ -2913,36 +2890,102 @@ Previous Releases:
         const TASK_INPUT_STORAGE_KEY = 'vidist_task_inputs_v2';
 
         const TaskPersistence = {
+            // Maximum items: 300 (supports ~7 days of history at 40-50 gens/day)
+            MAX_ITEMS: 300,
+            // Maximum age: 7 days (matches Wavespeed API retention)
+            MAX_AGE_DAYS: 7,
+
             save: function (id, data) {
                 try {
                     const inputs = this.getAll();
-                    // Keep max 100 items to prevent storage bloat
-                    const keys = Object.keys(inputs);
-                    if (keys.length > 100) {
-                        // Remove oldest (simple heuristic)
-                        const oldestKey = keys[0];
-                        delete inputs[oldestKey];
-                    }
 
+                    // Add timestamp
                     inputs[id] = {
                         ...data,
                         timestamp: new Date().toISOString()
                     };
 
+                    // Cleanup old items
+                    this.cleanup(inputs);
+
                     localStorage.setItem(TASK_INPUT_STORAGE_KEY, JSON.stringify(inputs));
                     console.log('💾 Task Persistence: Saved input for', id);
                 } catch (e) { console.error('TaskPersistence Save Error:', e); }
             },
+
             get: function (id) {
                 try {
                     const inputs = this.getAll();
                     return inputs[id] || null;
                 } catch (e) { return null; }
             },
+
             getAll: function () {
                 try {
                     return JSON.parse(localStorage.getItem(TASK_INPUT_STORAGE_KEY) || '{}');
                 } catch (e) { return {}; }
+            },
+
+            cleanup: function (inputs) {
+                const now = new Date();
+                const maxAge = this.MAX_AGE_DAYS * 24 * 60 * 60 * 1000; // 7 days in ms
+                const entries = Object.entries(inputs);
+
+                // Remove items older than 7 days
+                let removedByAge = 0;
+                entries.forEach(([id, data]) => {
+                    if (data.timestamp) {
+                        const age = now - new Date(data.timestamp);
+                        if (age > maxAge) {
+                            delete inputs[id];
+                            removedByAge++;
+                        }
+                    }
+                });
+
+                // If still over limit, remove oldest entries
+                const remainingKeys = Object.keys(inputs);
+                if (remainingKeys.length > this.MAX_ITEMS) {
+                    const sorted = remainingKeys
+                        .map(id => ({ id, timestamp: inputs[id].timestamp || '1970-01-01' }))
+                        .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+                    const toRemove = sorted.slice(0, remainingKeys.length - this.MAX_ITEMS);
+                    toRemove.forEach(item => delete inputs[item.id]);
+
+                    console.log(`🧹 TaskPersistence: Removed ${removedByAge} old items, ${toRemove.length} excess items`);
+                } else if (removedByAge > 0) {
+                    console.log(`🧹 TaskPersistence: Removed ${removedByAge} items older than ${this.MAX_AGE_DAYS} days`);
+                }
+            },
+
+            // Migrate data from old taskInputMap
+            migrateFromOld: function () {
+                try {
+                    const oldData = localStorage.getItem('taskInputMap');
+                    if (!oldData) return;
+
+                    const oldMap = new Map(JSON.parse(oldData));
+                    const inputs = this.getAll();
+                    let migrated = 0;
+
+                    oldMap.forEach((data, id) => {
+                        if (!inputs[id]) {
+                            inputs[id] = {
+                                ...data,
+                                timestamp: new Date().toISOString() // Assume recent
+                            };
+                            migrated++;
+                        }
+                    });
+
+                    if (migrated > 0) {
+                        localStorage.setItem(TASK_INPUT_STORAGE_KEY, JSON.stringify(inputs));
+                        console.log(`✅ Migrated ${migrated} items from old taskInputMap`);
+                    }
+                } catch (e) {
+                    console.error('Migration error:', e);
+                }
             }
         };
 
@@ -2960,6 +3003,9 @@ Previous Releases:
         } else {
             window.getTaskInput = (id) => TaskPersistence.get(id);
         }
+
+        // Run migration on startup
+        TaskPersistence.migrateFromOld();
         // ========== END: Task Persistence ==========
 
 

@@ -15,7 +15,7 @@ const VIDIST_VERSION = {
     // Semantic Version (Major.Minor.Patch)
     major: 2,
     minor: 7,
-    patch: 0,
+    patch: 1,
 
     // Build number (MMDDYYYY format)
     build: 'git01042026',
@@ -44,6 +44,7 @@ const VIDIST_VERSION = {
 
     // Latest features changelog
     features: [
+        '🔧 History Prompt Persistence Fix v2.7.1 (Fixed "No prompt available" issue - removed dual storage conflict, unified to TaskPersistence system with 300-item/7-day retention, timestamp-based cleanup, automatic migration from old data)',
         '💰 Credit Balance Redesign v2.7.0 (Simplified balance display - renamed to "Credit Balance" with 3 decimal precision, removed video estimates, cleaner centered layout with icon and Top Up button)',
         '🔧 API Key Restoration Fix v2.6.10 (Fixed Gemini API key not appearing after browser refresh - added missing localStorage restoration code on page startup)',
         '💾 API Key Persistence v2.6.9 (Added explicit Save buttons for API keys with visual feedback, improved localStorage persistence message, mobile UI fixes: removed logo border glow, widened stats bar to prevent Wavespeed icon cutoff)',
