@@ -15,10 +15,10 @@ const VIDIST_VERSION = {
     // Semantic Version (Major.Minor.Patch)
     major: 2,
     minor: 6,
-    patch: 8,
+    patch: 9,
 
     // Build number (MMDDYYYY format)
-    build: 'git01032026',
+    build: 'git01042026',
 
     // Computed full version string
     get full() {
@@ -44,6 +44,7 @@ const VIDIST_VERSION = {
 
     // Latest features changelog
     features: [
+        '💾 API Key Persistence v2.6.9 (Added explicit Save buttons for API keys with visual feedback, improved localStorage persistence message, mobile UI fixes: removed logo border glow, widened stats bar to prevent Wavespeed icon cutoff)',
         '💎 Unified Stats Bar v2.6.8 (Merged Balance+Estimates+Topup into single row with dividers, clean professional look, works on both Desktop and Mobile)',
         '🧹 Header Cleanup v2.6.7 (Simplified CSS selectors to properly target HTML structure, Balance+Topup in one card, Estimate below, fixed compression issues)',
         '💎 Single-Row Header v2.6.6 (Balance + Estimates merged into one row with equal-width cards, cyan coin icon theme, 50% space saved, topup button repositioned)',

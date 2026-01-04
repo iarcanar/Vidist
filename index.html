@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <!--
 ╔═══════════════════════════════════════════════════════════════════════════╗
-║ VIDIST v2.6.8 - Precision Creative Engine                                ║
-║ Build: git01032026                                                        ║
+║ VIDIST v2.6.9 - Precision Creative Engine                                ║
+║ Build: git01042026                                                        ║
 ║ ⚠️ WARNING: Update version to match js/version.js when modifying!        ║
 ║ AI-Powered Prompt & Video Crafting Platform                              ║
 ║ By: iarcanar                                                              ║
@@ -60,7 +60,7 @@ Previous Releases:
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#1a1a2e">
-    <title>VIDIST v2.6.8 - Precision Creative Engine</title>
+    <title>VIDIST v2.6.9 - Precision Creative Engine</title>
     <link rel="icon" type="image/x-icon" href="assets/VIDIST_ICO.ico?v=2">
     <link rel="shortcut icon" type="image/x-icon" href="assets/VIDIST_ICO.ico?v=2">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -171,9 +171,18 @@ Previous Releases:
                                     <span class="text-xs text-gray-500 ml-2">Enabled</span>
                                 </label>
                             </div>
-                            <input type="password" id="api-key-wavespeed" placeholder="Enter your Wavespeed API Key"
-                                class="w-full px-4 py-3 rounded-xl focus:ring-2 focus:ring-cyan-500/50 font-mono text-sm"
-                                value="">
+                            <div class="flex gap-2">
+                                <input type="password" id="api-key-wavespeed" placeholder="Enter your Wavespeed API Key"
+                                    class="flex-1 px-4 py-3 rounded-xl focus:ring-2 focus:ring-cyan-500/50 font-mono text-sm"
+                                    value="">
+                                <button id="save-wavespeed-key"
+                                    class="px-4 py-3 rounded-xl bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-sm transition-all flex items-center gap-2 whitespace-nowrap">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                    </svg>
+                                    <span>Save</span>
+                                </button>
+                            </div>
                             <p class="mt-1 text-xs text-gray-500">Used for Wavespeed Wan 2.5 model.</p>
                         </div>
 
@@ -188,16 +197,32 @@ Previous Releases:
                                     <span class="text-xs text-gray-500 ml-2">Enabled</span>
                                 </label>
                             </div>
-                            <input type="password" id="api-key-gemini" placeholder="Enter your Gemini API Key"
-                                class="w-full px-4 py-3 rounded-xl focus:ring-2 focus:ring-purple-500/50 font-mono text-sm"
-                                value="">
+                            <div class="flex gap-2">
+                                <input type="password" id="api-key-gemini" placeholder="Enter your Gemini API Key"
+                                    class="flex-1 px-4 py-3 rounded-xl focus:ring-2 focus:ring-purple-500/50 font-mono text-sm"
+                                    value="">
+                                <button id="save-gemini-key"
+                                    class="px-4 py-3 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-semibold text-sm transition-all flex items-center gap-2 whitespace-nowrap">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                    </svg>
+                                    <span>Save</span>
+                                </button>
+                            </div>
                             <p class="mt-1 text-xs text-gray-500">Used for AI-powered prompt generation. Get your key at
                                 <a href="https://aistudio.google.com/app/apikey" target="_blank"
                                     class="text-purple-400 hover:text-purple-300 underline">Google AI Studio</a>
                             </p>
                         </div>
 
-                        <p class="mt-2 text-xs text-gray-500">Your API keys are stored locally in your browser</p>
+                        <div class="mt-3 p-3 rounded-lg bg-gray-800/50 border border-gray-700">
+                            <p class="text-xs text-gray-400 flex items-start gap-2">
+                                <svg class="w-4 h-4 text-cyan-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                <span>Your API keys are stored locally in your browser and will persist across sessions until manually deleted. Click <strong>Save</strong> to confirm storage.</span>
+                            </p>
+                        </div>
                     </div>
                 </div>
 
@@ -3564,10 +3589,58 @@ Previous Releases:
                 apiKeyChevron.style.transform = isHidden ? 'rotate(180deg)' : 'rotate(0deg)';
             });
 
-            apiKeyInput_ws.addEventListener('change', () => {
+            // Wavespeed API Key Save Button
+            const saveWavespeedBtn = document.getElementById('save-wavespeed-key');
+            saveWavespeedBtn.addEventListener('click', () => {
                 const key = apiKeyInput_ws.value.trim();
                 localStorage.setItem('wavespeed_api_key', key);
+
+                // Visual feedback
+                const originalHTML = saveWavespeedBtn.innerHTML;
+                saveWavespeedBtn.innerHTML = `
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <span>Saved!</span>
+                `;
+                saveWavespeedBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+                saveWavespeedBtn.classList.remove('bg-cyan-600', 'hover:bg-cyan-700');
+
+                setTimeout(() => {
+                    saveWavespeedBtn.innerHTML = originalHTML;
+                    saveWavespeedBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
+                    saveWavespeedBtn.classList.add('bg-cyan-600', 'hover:bg-cyan-700');
+                }, 2000);
+
                 if (key) fetchUsageStats_Wavespeed();
+                console.log('✅ Wavespeed API key saved to localStorage');
+            });
+
+            // Gemini API Key Save Button
+            const saveGeminiBtn = document.getElementById('save-gemini-key');
+            const apiKeyInput_gemini = document.getElementById('api-key-gemini');
+            saveGeminiBtn.addEventListener('click', () => {
+                const key = apiKeyInput_gemini.value.trim();
+                localStorage.setItem('gemini_api_key', key);
+
+                // Visual feedback
+                const originalHTML = saveGeminiBtn.innerHTML;
+                saveGeminiBtn.innerHTML = `
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <span>Saved!</span>
+                `;
+                saveGeminiBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+                saveGeminiBtn.classList.remove('bg-purple-600', 'hover:bg-purple-700');
+
+                setTimeout(() => {
+                    saveGeminiBtn.innerHTML = originalHTML;
+                    saveGeminiBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
+                    saveGeminiBtn.classList.add('bg-purple-600', 'hover:bg-purple-700');
+                }, 2000);
+
+                console.log('✅ Gemini API key saved to localStorage');
             });
 
             // API Toggle Event Listeners

@@ -151,12 +151,37 @@
 
     /* Unified Stats Bar - Mobile */
     .cyber-card:has(#wavespeed-balance) {
-        padding: 0.5rem 0.75rem !important;
+        padding: 0.4rem 0.5rem !important;
+        flex: 1 !important;
+        min-width: 0 !important;
     }
 
     .cyber-card:has(#wavespeed-balance) > .flex {
-        gap: 0.5rem !important;
+        gap: 0.4rem !important;
         flex-wrap: nowrap !important;
+    }
+
+    /* Give stats bar more space by compressing logo section */
+    header > div > div:first-child {
+        flex-shrink: 2 !important;
+        min-width: 0 !important;
+    }
+
+    header > div > div:first-child .flex.gap-4 {
+        gap: 0.5rem !important;
+    }
+
+    /* Compact logo text */
+    header h1 {
+        font-size: 1.25rem !important;
+    }
+
+    header h1 .text-sm {
+        font-size: 0.625rem !important;
+    }
+
+    header p.text-xs {
+        font-size: 0.5rem !important;
     }
 
     /* Hide balance icon on mobile */
@@ -181,14 +206,25 @@
 
     /* Compact topup */
     .cyber-card:has(#wavespeed-balance) a {
-        padding: 0.25rem 0.5rem !important;
-        font-size: 0.625rem !important;
-        gap: 0.25rem !important;
+        padding: 0.25rem 0.4rem !important;
+        font-size: 0.5rem !important;
+        gap: 0.2rem !important;
     }
 
     .cyber-card:has(#wavespeed-balance) a img {
-        width: 0.75rem !important;
-        height: 0.75rem !important;
+        width: 0.7rem !important;
+        height: 0.7rem !important;
+    }
+
+    .cyber-card:has(#wavespeed-balance) a span {
+        display: none !important;
+    }
+
+    /* Show only WS logo on very small screens */
+    @media (max-width: 360px) {
+        .cyber-card:has(#wavespeed-balance) a {
+            padding: 0.25rem !important;
+        }
     }
 
     /* Hide dividers on very small screens */
@@ -306,9 +342,16 @@
         grid-template-columns: 1fr !important;
     }
 
-    /* ลดขนาด logo */
+    /* ลดขนาด logo และลบกรอบ */
     header img {
         height: 30px !important;
+    }
+
+    /* Remove logo border/glow on mobile to save space */
+    header .neon-border.pulse-glow {
+        border: none !important;
+        box-shadow: none !important;
+        background: transparent !important;
     }
 
     /* Compact status badges */
