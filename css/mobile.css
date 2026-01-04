@@ -149,26 +149,14 @@
         gap: 0.5rem !important;
     }
 
-    /* Unified Stats Bar - Mobile */
-    .cyber-card:has(#wavespeed-balance) {
-        padding: 0.4rem 0.5rem !important;
-        flex: 1 !important;
-        min-width: 0 !important;
+    /* Credit Balance - Mobile */
+    .cyber-card:has(#credit_balance) {
+        padding: 0.5rem 0.75rem !important;
     }
 
-    .cyber-card:has(#wavespeed-balance) > .flex {
-        gap: 0.4rem !important;
-        flex-wrap: nowrap !important;
-    }
-
-    /* Give stats bar more space by compressing logo section */
-    header > div > div:first-child {
-        flex-shrink: 2 !important;
-        min-width: 0 !important;
-    }
-
-    header > div > div:first-child .flex.gap-4 {
+    .cyber-card:has(#credit_balance) > .flex {
         gap: 0.5rem !important;
+        flex-wrap: nowrap !important;
     }
 
     /* Compact logo text */
@@ -184,52 +172,35 @@
         font-size: 0.5rem !important;
     }
 
-    /* Hide balance icon on mobile */
-    .cyber-card:has(#wavespeed-balance) .w-6 {
-        display: none !important;
+    /* Compact credit balance display */
+    .cyber-card:has(#credit_balance) .w-8 {
+        width: 1.5rem !important;
+        height: 1.5rem !important;
     }
 
-    /* Compact balance */
-    .cyber-card:has(#wavespeed-balance) #wavespeed-balance {
-        font-size: 0.875rem !important;
-    }
-
-    /* Compact estimates */
-    .cyber-card:has(#wavespeed-balance) #estimate-5sec,
-    .cyber-card:has(#wavespeed-balance) #estimate-10sec {
-        font-size: 0.75rem !important;
-    }
-
-    .cyber-card:has(#wavespeed-balance) .text-xs.text-gray-400 {
-        font-size: 0.625rem !important;
-    }
-
-    /* Compact topup */
-    .cyber-card:has(#wavespeed-balance) a {
-        padding: 0.25rem 0.4rem !important;
-        font-size: 0.5rem !important;
-        gap: 0.2rem !important;
-    }
-
-    .cyber-card:has(#wavespeed-balance) a img {
-        width: 0.7rem !important;
-        height: 0.7rem !important;
-    }
-
-    .cyber-card:has(#wavespeed-balance) a span {
-        display: none !important;
-    }
-
-    /* Show only WS logo on very small screens */
-    @media (max-width: 360px) {
-        .cyber-card:has(#wavespeed-balance) a {
-            padding: 0.25rem !important;
-        }
-    }
-
-    /* Hide dividers on very small screens */
-    .cyber-card:has(#wavespeed-balance) .h-6.w-px {
+    .cyber-card:has(#credit_balance) .w-8 svg {
+        width: 1rem !important;
         height: 1rem !important;
+    }
+
+    .cyber-card:has(#credit_balance) #credit_balance {
+        font-size: 1rem !important;
+    }
+
+    .cyber-card:has(#credit_balance) .text-xs {
+        font-size: 0.5rem !important;
+    }
+
+    /* Compact topup button */
+    .cyber-card:has(#credit_balance) a {
+        padding: 0.4rem 0.6rem !important;
+        font-size: 0.6rem !important;
+        gap: 0.3rem !important;
+    }
+
+    .cyber-card:has(#credit_balance) a svg {
+        width: 0.75rem !important;
+        height: 0.75rem !important;
     }
 
     /* Panel overflow fixes */
