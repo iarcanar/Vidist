@@ -1162,6 +1162,50 @@ Previous Releases:
                         <div class="segmented-progress-scanline-mini"></div>
                     </div>
 
+                    <!-- ========== ✨ NEW: Search/Filter/Export Controls ========== -->
+                    <div class="flex flex-col gap-2 mb-3">
+                        <!-- Search Box -->
+                        <input
+                            type="text"
+                            id="history-search-input"
+                            placeholder="🔍 Search prompts..."
+                            oninput="applyHistorySearchFilter()"
+                            class="w-full px-3 py-2 bg-gray-900/50 border border-cyan-500/30 rounded-lg text-sm text-gray-300 placeholder-gray-500 focus:outline-none focus:border-cyan-400 transition-all"
+                        />
+
+                        <!-- Filter/Sort/Export Row -->
+                        <div class="flex gap-2">
+                            <!-- Status Filter -->
+                            <select
+                                id="history-status-filter"
+                                onchange="applyHistorySearchFilter()"
+                                class="flex-1 px-2 py-1.5 bg-gray-900/50 border border-purple-500/30 rounded-lg text-xs text-gray-300 focus:outline-none focus:border-purple-400 transition-all">
+                                <option value="all">All Status</option>
+                                <option value="completed">Completed</option>
+                                <option value="failed">Failed</option>
+                                <option value="processing">Processing</option>
+                            </select>
+
+                            <!-- Sort -->
+                            <select
+                                id="history-sort-order"
+                                onchange="applyHistorySearchFilter()"
+                                class="flex-1 px-2 py-1.5 bg-gray-900/50 border border-green-500/30 rounded-lg text-xs text-gray-300 focus:outline-none focus:border-green-400 transition-all">
+                                <option value="newest">Newest First</option>
+                                <option value="oldest">Oldest First</option>
+                            </select>
+
+                            <!-- Export Button -->
+                            <button
+                                onclick="exportHistory()"
+                                title="Export History"
+                                class="px-3 py-1.5 bg-gradient-to-r from-orange-500/20 to-pink-500/20 hover:from-orange-500/30 hover:to-pink-500/30 border border-orange-500/30 rounded-lg transition-all text-xs font-semibold text-orange-400 whitespace-nowrap">
+                                📥 Export
+                            </button>
+                        </div>
+                    </div>
+                    <!-- ========== END: Search/Filter/Export Controls ========== -->
+
                     <div id="video-history"
                         class="space-y-3 max-h-[calc(100vh-100px)] overflow-y-auto custom-scrollbar pr-2">
                         <p class="text-sm text-gray-500 text-center py-8">No videos yet. Generate your first video!</p>
@@ -3007,6 +3051,83 @@ Previous Releases:
         TaskPersistence.migrateFromOld();
         // ========== END: Task Persistence ==========
 
+        // ========== ✨ NEW: History Migration System ==========
+        // Ensures legacy history items have all required fields
+
+        /**
+         * Guess modelKey from model name by matching against MODEL_CONFIG
+         * @param {string} modelName - The display name (e.g., "Wan 2.5 I2V")
+         * @returns {string|null} - The matched key or null
+         */
+        function guessModelKey(modelName) {
+            if (!modelName) return null;
+
+            // Direct match with MODEL_CONFIG names
+            for (const [key, config] of Object.entries(MODEL_CONFIG)) {
+                if (config.name === modelName) {
+                    return key;
+                }
+            }
+
+            // Fallback: partial match (case insensitive)
+            const lowerName = modelName.toLowerCase();
+            if (lowerName.includes('2.5') && lowerName.includes('extend')) return 'ws-wan-25-extend';
+            if (lowerName.includes('2.5') && lowerName.includes('i2v')) return 'ws-wan-25-i2v';
+            if (lowerName.includes('2.6') && lowerName.includes('edit')) return 'ws-wan-26-image-edit';
+            if (lowerName.includes('2.6') && lowerName.includes('i2v')) return 'ws-wan-26-i2v';
+            if (lowerName.includes('kling')) return 'ws-kling-o1-i2v';
+
+            return null; // No match found
+        }
+
+        /**
+         * Migrate legacy history data by adding missing fields
+         * Run once on app init to ensure all items have required properties
+         */
+        function migrateHistoryData() {
+            let migrated = 0;
+
+            videoHistoryData.forEach(item => {
+                let itemModified = false;
+
+                // Add missing fields with defaults
+                if (item.craftData === undefined) {
+                    item.craftData = null;
+                    itemModified = true;
+                }
+
+                if (!item.modelKey && item.model) {
+                    item.modelKey = guessModelKey(item.model);
+                    itemModified = true;
+                }
+
+                if (!item.outputType) {
+                    // Guess from model or default to 'video'
+                    if (item.modelKey === 'ws-wan-26-image-edit') {
+                        item.outputType = 'image';
+                    } else {
+                        item.outputType = 'video';
+                    }
+                    itemModified = true;
+                }
+
+                if (item.negativePrompt === undefined) {
+                    item.negativePrompt = '';
+                    itemModified = true;
+                }
+
+                if (itemModified) {
+                    migrated++;
+                }
+            });
+
+            if (migrated > 0) {
+                console.log(`✅ History Migration: Updated ${migrated} legacy items with missing fields`);
+                safeSetLocalStorage('videoHistory', JSON.stringify(videoHistoryData));
+            }
+        }
+        // ========== END: History Migration ==========
+
 
         // Clear all prompts (only when user clicks clear button)
         // Make function globally accessible for onclick handler
@@ -3502,6 +3623,18 @@ Previous Releases:
                 loadHistoryFromLocalStorage(); // Load history from local storage
             } catch (e) {
                 console.error("❌ Error loading history:", e);
+            }
+
+            try {
+                migrateHistoryData(); // Migrate legacy history items
+            } catch (e) {
+                console.error("❌ Error migrating history:", e);
+            }
+
+            try {
+                resumePendingPolling(); // Resume polling for pending items
+            } catch (e) {
+                console.error("❌ Error resuming pending polling:", e);
             }
 
             try {
@@ -6580,6 +6713,398 @@ Previous Releases:
             renderVideoHistory(); // Always attempt to render, even if empty
         }
 
+        // ========== ✨ NEW: Resume Pending Polling After Page Refresh ==========
+        /**
+         * Resume polling for pending/processing videos after page refresh
+         * Scans history for incomplete items and checks their status
+         */
+        async function resumePendingPolling() {
+            console.log('🔄 Checking for pending items to resume...');
+
+            // Check if API key is available
+            const apiKey = apiKeyInput_ws?.value?.trim();
+            if (!apiKey) {
+                console.log('⚠️ No API key available, skipping resume polling');
+                return;
+            }
+
+            // Find all pending/processing items
+            const pendingStatuses = ['pending', 'in_progress', 'processing', 'in_queue', 'starting'];
+            const pendingItems = videoHistoryData.filter(item =>
+                item.id &&
+                !item.url &&
+                pendingStatuses.includes(item.status)
+            );
+
+            if (pendingItems.length === 0) {
+                console.log('✅ No pending items found');
+                return;
+            }
+
+            console.log(`📋 Found ${pendingItems.length} pending item(s) to check`);
+
+            // Check status for each pending item
+            for (const item of pendingItems) {
+                try {
+                    // Construct polling URL from ID
+                    // Format: https://api.wavespeed.ai/api/v3/predictions/{id}/result
+                    const pollingUrl = `${WAVESPEED_API_BASE_URL}/predictions/${item.id}/result`;
+
+                    console.log(`🔍 Checking status for: ${item.id}`);
+
+                    const response = await fetch(pollingUrl, {
+                        method: 'GET',
+                        headers: { 'Authorization': `Bearer ${apiKey}` }
+                    });
+
+                    if (!response.ok) {
+                        console.warn(`⚠️ Failed to check ${item.id}: HTTP ${response.status}`);
+                        continue;
+                    }
+
+                    const data = await response.json();
+
+                    if (data.code === 200 && data.data) {
+                        const status = data.data.status;
+                        const outputs = data.data.outputs;
+
+                        console.log(`📊 ${item.id} status: ${status}`);
+
+                        // Update item in history
+                        const itemIndex = videoHistoryData.findIndex(v => v.id === item.id);
+                        if (itemIndex !== -1) {
+                            videoHistoryData[itemIndex].status = status;
+
+                            // If completed, save the video URL
+                            if ((status === 'completed' || status === 'succeeded') && outputs && outputs[0]) {
+                                videoHistoryData[itemIndex].url = outputs[0];
+                                console.log(`✅ ${item.id} completed! URL saved.`);
+
+                                // Save to localStorage
+                                safeSetLocalStorage('videoHistory', JSON.stringify(videoHistoryData));
+                            } else if (status === 'failed' || status === 'canceled') {
+                                console.log(`❌ ${item.id} ${status}`);
+                                safeSetLocalStorage('videoHistory', JSON.stringify(videoHistoryData));
+                            } else {
+                                // Still processing - for the FIRST pending item, resume polling
+                                if (pendingItems[0].id === item.id && !currentGenerationId) {
+                                    console.log(`⏯️ Resuming polling for ${item.id}...`);
+                                    currentGenerationId = item.id;
+                                    currentPollingUrl = pollingUrl;
+                                    currentProvider = 'wavespeed';
+
+                                    // Update UI
+                                    if (statusBadge) {
+                                        statusBadge.className = 'status-badge status-processing';
+                                        statusBadge.textContent = 'RESUMING';
+                                    }
+                                    if (statusText) {
+                                        statusText.textContent = 'กำลังเช็คสถานะต่อ...';
+                                    }
+
+                                    // Start polling
+                                    startPolling(apiKey, pollingUrl);
+                                }
+                            }
+                        }
+                    }
+                } catch (error) {
+                    console.error(`❌ Error checking ${item.id}:`, error);
+                }
+            }
+
+            // Re-render history with updated statuses
+            renderVideoHistory();
+        }
+        // ========== END: Resume Pending Polling ==========
+
+        // ========== ✨ NEW: Recovery/Retry Functions ==========
+        /**
+         * Manually check status for a stuck video
+         * @param {string} videoId - The video ID to check
+         */
+        async function checkVideoStatus(videoId) {
+            console.log(`🔍 Manually checking status for: ${videoId}`);
+
+            const apiKey = apiKeyInput_ws?.value?.trim();
+            if (!apiKey) {
+                alert('API key required to check status');
+                return;
+            }
+
+            try {
+                const pollingUrl = `${WAVESPEED_API_BASE_URL}/predictions/${videoId}/result`;
+                const response = await fetch(pollingUrl, {
+                    method: 'GET',
+                    headers: { 'Authorization': `Bearer ${apiKey}` }
+                });
+
+                if (!response.ok) {
+                    alert(`Failed to check status: HTTP ${response.status}`);
+                    return;
+                }
+
+                const data = await response.json();
+
+                if (data.code === 200 && data.data) {
+                    const status = data.data.status;
+                    const outputs = data.data.outputs;
+
+                    // Update item in history
+                    const itemIndex = videoHistoryData.findIndex(v => v.id === videoId);
+                    if (itemIndex !== -1) {
+                        videoHistoryData[itemIndex].status = status;
+
+                        if ((status === 'completed' || status === 'succeeded') && outputs && outputs[0]) {
+                            videoHistoryData[itemIndex].url = outputs[0];
+                            alert(`✅ Video completed! Status: ${status}`);
+                        } else if (status === 'failed' || status === 'canceled') {
+                            alert(`❌ Video ${status}`);
+                        } else {
+                            alert(`ℹ️ Still processing. Status: ${status}`);
+                        }
+
+                        safeSetLocalStorage('videoHistory', JSON.stringify(videoHistoryData));
+                        renderVideoHistory();
+                    }
+                } else {
+                    alert('Failed to parse API response');
+                }
+            } catch (error) {
+                console.error('Error checking status:', error);
+                alert(`Error: ${error.message}`);
+            }
+        }
+
+        /**
+         * Mark a stuck video as failed
+         * @param {string} videoId - The video ID to mark as failed
+         */
+        function markVideoAsFailed(videoId) {
+            if (!confirm('Mark this video as failed? This cannot be undone.')) {
+                return;
+            }
+
+            const itemIndex = videoHistoryData.findIndex(v => v.id === videoId);
+            if (itemIndex !== -1) {
+                videoHistoryData[itemIndex].status = 'failed';
+                safeSetLocalStorage('videoHistory', JSON.stringify(videoHistoryData));
+                renderVideoHistory();
+                console.log(`❌ Marked ${videoId} as failed`);
+            }
+        }
+
+        /**
+         * Retry a failed video generation with the same parameters
+         * @param {string} videoId - The failed video ID
+         */
+        async function retryFailedVideo(videoId) {
+            console.log(`🔄 Retrying failed video: ${videoId}`);
+
+            // Get saved task input
+            const savedInput = getTaskInput(videoId);
+            if (!savedInput) {
+                alert('Cannot retry: No saved parameters found for this video');
+                return;
+            }
+
+            // Confirm with user
+            if (!confirm(`Retry with these parameters?\n\nPrompt: ${savedInput.prompt?.substring(0, 100)}...\nModel: ${savedInput.model}\nDuration: ${savedInput.duration}s`)) {
+                return;
+            }
+
+            // Fill form with saved parameters
+            const promptTextarea = document.getElementById('prompt');
+            const negativePromptInput = document.getElementById('negative-prompt');
+            const modelSelect = document.getElementById('model-select');
+            const durationSelect = document.getElementById('duration-select');
+            const resolutionSelect = document.getElementById('resolution-select');
+
+            if (promptTextarea) promptTextarea.value = savedInput.prompt || '';
+            if (negativePromptInput) negativePromptInput.value = savedInput.negativePrompt || '';
+            if (modelSelect && savedInput.modelKey) modelSelect.value = savedInput.modelKey;
+            if (durationSelect && savedInput.duration) durationSelect.value = savedInput.duration;
+            if (resolutionSelect && savedInput.resolution) resolutionSelect.value = savedInput.resolution;
+
+            // Restore Prompt Craft data if available
+            if (savedInput.craftData) {
+                restoreCraftData(savedInput.craftData);
+            }
+
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+
+            alert('✅ Parameters restored! Click Generate to retry.');
+        }
+
+        // Make functions globally accessible
+        window.checkVideoStatus = checkVideoStatus;
+        window.markVideoAsFailed = markVideoAsFailed;
+        window.retryFailedVideo = retryFailedVideo;
+        // ========== END: Recovery/Retry Functions ==========
+
+        // ========== ✨ NEW: Search/Filter/Export Functions ==========
+        /**
+         * Apply search, filter, and sort to history
+         * Modifies videoHistoryData temporarily for rendering
+         */
+        let originalHistoryData = null; // Store original before filtering
+
+        function applyHistorySearchFilter() {
+            // Restore original data if we filtered before
+            if (originalHistoryData) {
+                videoHistoryData = [...originalHistoryData];
+            } else {
+                originalHistoryData = [...videoHistoryData];
+            }
+
+            let filteredData = [...videoHistoryData];
+
+            // Apply search filter
+            const searchInput = document.getElementById('history-search-input');
+            if (searchInput && searchInput.value.trim()) {
+                const searchTerm = searchInput.value.trim().toLowerCase();
+                filteredData = filteredData.filter(v =>
+                    (v.prompt || '').toLowerCase().includes(searchTerm) ||
+                    (v.model || '').toLowerCase().includes(searchTerm)
+                );
+            }
+
+            // Apply status filter
+            const statusFilter = document.getElementById('history-status-filter');
+            if (statusFilter && statusFilter.value !== 'all') {
+                const status = statusFilter.value;
+                if (status === 'completed') {
+                    filteredData = filteredData.filter(v =>
+                        v.status === 'completed' || v.status === 'succeeded'
+                    );
+                } else if (status === 'failed') {
+                    filteredData = filteredData.filter(v =>
+                        v.status === 'failed' || v.status === 'canceled'
+                    );
+                } else if (status === 'processing') {
+                    filteredData = filteredData.filter(v =>
+                        v.status === 'pending' || v.status === 'in_progress' ||
+                        v.status === 'processing' || v.status === 'in_queue'
+                    );
+                }
+            }
+
+            // Apply sort
+            const sortOrder = document.getElementById('history-sort-order');
+            if (sortOrder) {
+                if (sortOrder.value === 'newest') {
+                    filteredData.sort((a, b) =>
+                        new Date(b.createdAt || 0) - new Date(a.createdAt || 0)
+                    );
+                } else if (sortOrder.value === 'oldest') {
+                    filteredData.sort((a, b) =>
+                        new Date(a.createdAt || 0) - new Date(b.createdAt || 0)
+                    );
+                }
+            }
+
+            // Update display
+            videoHistoryData = filteredData;
+            renderVideoHistory();
+        }
+
+        /**
+         * Export history to JSON or CSV
+         */
+        function exportHistory() {
+            if (!videoHistoryData || videoHistoryData.length === 0) {
+                alert('No history to export');
+                return;
+            }
+
+            // Ask user for format
+            const format = prompt('Export format:\n1. JSON (full data)\n2. CSV (simplified)\n\nEnter 1 or 2:', '1');
+
+            if (format === '1') {
+                // Export as JSON
+                const jsonData = JSON.stringify(videoHistoryData, null, 2);
+                const blob = new Blob([jsonData], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `vidist_history_${new Date().toISOString().slice(0, 10)}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+                console.log('✅ Exported history as JSON');
+            } else if (format === '2') {
+                // Export as CSV
+                const headers = ['ID', 'Prompt', 'Model', 'Status', 'Duration', 'Resolution', 'Created At', 'URL'];
+                const rows = videoHistoryData.map(v => [
+                    v.id || '',
+                    (v.prompt || '').replace(/"/g, '""'), // Escape quotes
+                    v.model || '',
+                    v.status || '',
+                    v.duration || '',
+                    v.resolution || '',
+                    v.createdAt || '',
+                    v.url || ''
+                ]);
+
+                const csv = [
+                    headers.join(','),
+                    ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+                ].join('\n');
+
+                const blob = new Blob([csv], { type: 'text/csv' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `vidist_history_${new Date().toISOString().slice(0, 10)}.csv`;
+                a.click();
+                URL.revokeObjectURL(url);
+                console.log('✅ Exported history as CSV');
+            } else {
+                alert('Invalid format selected');
+            }
+        }
+
+        // Make functions globally accessible
+        window.applyHistorySearchFilter = applyHistorySearchFilter;
+        window.exportHistory = exportHistory;
+        // ========== END: Search/Filter/Export Functions ==========
+
+        // ========== ✨ NEW: Smart Merge Helper for API Sync ==========
+        /**
+         * Merge local history item with API data without losing local fields
+         * Local data (prompt, settings) is source of truth - never overwrite from API
+         * API data (status, video_url) is updated
+         *
+         * @param {Object} localItem - Existing item from local history
+         * @param {Object} apiData - Fresh data from API
+         * @returns {Object} - Merged item
+         */
+        function mergeHistoryItem(localItem, apiData) {
+            // Extract video URL from various API formats
+            let videoUrl = null;
+            if (apiData.outputs && Array.isArray(apiData.outputs) && apiData.outputs.length > 0) {
+                videoUrl = apiData.outputs[0];
+            } else if (apiData.output && Array.isArray(apiData.output) && apiData.output.length > 0) {
+                videoUrl = apiData.output[0];
+            } else if (typeof apiData.output === 'string') {
+                videoUrl = apiData.output;
+            }
+
+            // Smart merge: Preserve all local fields, only update API-specific fields
+            return {
+                ...localItem,                     // Keep all local data (base)
+                status: apiData.status || localItem.status,  // Update status from API
+                url: videoUrl || localItem.url,   // Update URL only if API provides one
+                createdAt: apiData.created_at || localItem.createdAt, // Use API timestamp if available
+                processingTime: apiData.metrics?.predict_time ||
+                               (apiData.timings?.inference ? apiData.timings.inference / 1000 : localItem.processingTime),
+                // CRITICAL: Never overwrite these fields from API
+                // prompt, negativePrompt, craftData, modelKey, settings
+                // These are already in localItem and should NOT be touched
+            };
+        }
+        // ========== END: Smart Merge Helper ==========
+
         // ... (skipping refreshHistory modifications already done) ...
 
         // Go to downloadImage at the end of file to update it too
@@ -6716,30 +7241,40 @@ Previous Releases:
                         // ✨ NEW: ดึง craftData และ modelKey จาก existing item ใน wavespeedMap (ถ้ามี)
                         const existingItem = wavespeedMap.get(id);
 
-                        // Create History Item
-                        const historyItem = {
-                            id: id,
-                            // ✨ Use API URL if available, otherwise preserve local URL (prevent thumbnail revert)
-                            url: videoUrl || existingItem?.url || null,
-                            // ✨ FIXED: Wavespeed API returns fields at top level, not under .input
-                            prompt: savedInput?.prompt || apiItem.prompt || "No prompt available",
-                            negativePrompt: savedInput?.negativePrompt || apiItem.negative_prompt || '',
-                            model: savedInput?.model || modelName || 'unknown',
-                            modelKey: savedInput?.modelKey || existingItem?.modelKey || null, // ✨ รักษา modelKey
-                            outputType: outputType,  // ✨ NEW: Include outputType (v2.4.2)
-                            provider: 'wavespeed',
-                            duration: savedInput?.duration || apiItem.duration || 0,
-                            resolution: savedInput?.resolution || apiItem.resolution || 'N/A',
-                            shotType: savedInput?.shotType || apiItem.shot_type || null,
-                            promptExpansion: savedInput?.promptExpansion || apiItem.enable_prompt_expansion || false,
-                            seed: savedInput?.seed || apiItem.seed || null,
-                            sourceImage: savedInput?.sourceImage || apiItem.image || null,
-                            createdAt: apiItem.created_at || new Date().toISOString(),
-                            processingTime: apiItem.metrics?.predict_time || (apiItem.timings?.inference ? apiItem.timings.inference / 1000 : 0),
-                            status: status,
-                            craftData: savedInput?.craftData || existingItem?.craftData || null, // ✨ รักษา craftData
-                            imageCounter: savedInput?.imageCounter || existingItem?.imageCounter || null // ✨ Persist filename counter
-                        };
+                        // ========== ✨ IMPROVED: Smart Merge Strategy (v2.7.2) ==========
+                        let historyItem;
+
+                        if (existingItem) {
+                            // Item exists in local history - use smart merge to preserve local data
+                            historyItem = mergeHistoryItem(existingItem, apiItem);
+                            console.log(`🔄 Merged existing item ${id} (preserved local data)`);
+                        } else {
+                            // New item from API - create fresh entry
+                            historyItem = {
+                                id: id,
+                                url: videoUrl || null,
+                                // ✨ FIXED: Wavespeed API returns fields at top level, not under .input
+                                prompt: savedInput?.prompt || apiItem.prompt || "No prompt available",
+                                negativePrompt: savedInput?.negativePrompt || apiItem.negative_prompt || '',
+                                model: savedInput?.model || modelName || 'unknown',
+                                modelKey: savedInput?.modelKey || null,
+                                outputType: outputType,
+                                provider: 'wavespeed',
+                                duration: savedInput?.duration || apiItem.duration || 0,
+                                resolution: savedInput?.resolution || apiItem.resolution || 'N/A',
+                                shotType: savedInput?.shotType || apiItem.shot_type || null,
+                                promptExpansion: savedInput?.promptExpansion || apiItem.enable_prompt_expansion || false,
+                                seed: savedInput?.seed || apiItem.seed || null,
+                                sourceImage: savedInput?.sourceImage || apiItem.image || null,
+                                createdAt: apiItem.created_at || new Date().toISOString(),
+                                processingTime: apiItem.metrics?.predict_time || (apiItem.timings?.inference ? apiItem.timings.inference / 1000 : 0),
+                                status: status,
+                                craftData: savedInput?.craftData || null,
+                                imageCounter: savedInput?.imageCounter || null
+                            };
+                            console.log(`➕ Added new item ${id} from API`);
+                        }
+                        // ========== END: Smart Merge ==========
 
                         wavespeedMap.set(id, historyItem);
                     }
@@ -7244,12 +7779,20 @@ Previous Releases:
                             ${processingVideos.map((video) => {
                 const provider = video.provider || 'wavespeed';
                 const modelDisplay = video.model || 'unknown';
-                const promptDisplay = (video.prompt || 'Processing...').substring(0, 100);
+                const promptDisplay = (video.prompt || 'Processing...').substring(0, 150); // ✨ Increased from 100 to 150
+                const promptFullText = video.prompt || 'Processing...'; // ✨ Full prompt for tooltip
                 const statusDisplay = (video.status || 'processing').toUpperCase();
 
+                // ========== ✨ NEW: Calculate processing time for recovery buttons ==========
+                const createdTime = video.createdAt ? new Date(video.createdAt) : new Date();
+                const elapsedMinutes = (Date.now() - createdTime.getTime()) / (1000 * 60);
+                const showCheckStatus = elapsedMinutes > 5; // Show after 5 minutes
+                const showMarkFailed = elapsedMinutes > 30; // Show after 30 minutes
+                // ========== END: Time calculation ==========
+
                 return `
-                                    <div class="video-thumbnail rounded-xl overflow-hidden opacity-60 pointer-events-none mb-3" title="Video is still processing">
-                                        <div class="relative bg-gray-900 aspect-video overflow-hidden">
+                                    <div class="video-thumbnail rounded-xl overflow-hidden opacity-60 mb-3" title="Video is still processing">
+                                        <div class="relative bg-gray-900 aspect-video overflow-hidden group">
                                             <!-- Initial Image Layer (if available) -->
                                             ${video.initialImage ? `
                                                 <img src="${video.initialImage}"
@@ -7267,12 +7810,31 @@ Previous Releases:
                                             <div class="absolute inset-0 flex flex-col items-center justify-center">
                                                 <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-cyan-500 mb-3 drop-shadow-[0_0_10px_rgba(6,182,212,0.8)]"></div>
                                                 <p class="text-cyan-400 text-sm font-semibold drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]">${statusDisplay}</p>
-                                                <p class="text-gray-300 text-xs mt-1 drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]">Please wait...</p>
+                                                <p class="text-gray-300 text-xs mt-1 drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]">Please wait... (${Math.round(elapsedMinutes)}m)</p>
                                             </div>
+
+                                            <!-- ========== ✨ NEW: Recovery Buttons ========== -->
+                                            ${showCheckStatus ? `
+                                                <button
+                                                    onclick="checkVideoStatus('${video.id}')"
+                                                    class="absolute top-2 right-2 px-3 py-1 bg-cyan-500/90 hover:bg-cyan-400 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-all cursor-pointer z-20 shadow-lg"
+                                                    title="Manually check status">
+                                                    🔄 Check Status
+                                                </button>
+                                            ` : ''}
+                                            ${showMarkFailed ? `
+                                                <button
+                                                    onclick="markVideoAsFailed('${video.id}')"
+                                                    class="absolute bottom-2 right-2 px-3 py-1 bg-red-500/90 hover:bg-red-400 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-all cursor-pointer z-20 shadow-lg"
+                                                    title="Mark as failed">
+                                                    ❌ Mark Failed
+                                                </button>
+                                            ` : ''}
+                                            <!-- ========== END: Recovery Buttons ========== -->
 
                                         </div>
                                         <div class="p-3 bg-gray-900/50 border-t border-cyan-500/20">
-                                            <p class="text-xs text-gray-400 line-clamp-2">${promptDisplay}...</p>
+                                            <p class="text-xs text-gray-400 line-clamp-2" title="${promptFullText}">${promptDisplay}...</p>
                                             <div class="flex items-center justify-between mt-2">
                                                 <span class="text-xs text-cyan-400">${modelDisplay}</span>
                                                 <span class="text-xs text-gray-500 status-${video.status || 'processing'}">${statusDisplay}</span>
@@ -7413,6 +7975,21 @@ Previous Releases:
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
                                                 </svg>
                                             </button>
+
+                                            <!-- ========== ✨ NEW: Retry Button (only for failed videos) ========== -->
+                                            ${video.status === 'failed' || video.status === 'canceled' ? `
+                                                <button
+                                                    onclick="event.stopPropagation(); retryFailedVideo('${video.id}')"
+                                                    class="absolute top-1 right-1 px-2 py-1 bg-gradient-to-br from-orange-500/90 to-red-500/90 hover:from-orange-400 hover:to-red-400 border border-orange-300/50 hover:border-red-300 rounded-lg flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all duration-300 z-20 cursor-pointer shadow-lg hover:shadow-orange-500/50 hover:scale-110"
+                                                    title="Retry with same parameters"
+                                                    style="backdrop-filter: blur(10px);">
+                                                    <svg class="w-3 h-3 text-white drop-shadow-[0_0_3px_rgba(255,255,255,0.8)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                                                    </svg>
+                                                    <span class="text-[10px] font-semibold text-white">RETRY</span>
+                                                </button>
+                                            ` : ''}
+                                            <!-- ========== END: Retry Button ========== -->
 
                                             <svg class="w-12 h-12 text-cyan-400 opacity-0 group-hover:opacity-90 transition-opacity drop-shadow-lg" fill="currentColor" viewBox="0 0 20 20">
                                                 <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/>
