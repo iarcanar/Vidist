@@ -299,9 +299,15 @@
         grid-template-columns: 1fr !important;
     }
 
-    /* Stack buttons vertically */
-    .grid-cols-3 {
+    /* Stack buttons vertically (except language selector) */
+    .grid-cols-3:not(#language-selector > .grid-cols-3) {
         grid-template-columns: 1fr !important;
+    }
+
+    /* Keep language selector as 3 columns (EN/TH/JA) */
+    #language-selector .grid-cols-3 {
+        grid-template-columns: repeat(3, 1fr) !important;
+        gap: 0.5rem !important;
     }
 
     /* Extra small mobile - Header adjustments */
