@@ -15,10 +15,10 @@ const VIDIST_VERSION = {
     // Semantic Version (Major.Minor.Patch)
     major: 2,
     minor: 7,
-    patch: 4,
+    patch: 5,
 
     // Build number (MMDDYYYY format)
-    build: 'git01042026',
+    build: 'git01052026',
 
     // Computed full version string
     get full() {
@@ -44,6 +44,7 @@ const VIDIST_VERSION = {
 
     // Latest features changelog
     features: [
+        '🔍 Enhanced History Search v2.7.5 (Multi-field search for resolution (480p/720p/1080p), duration (3s/5s/10s), type (image/video/edit) - Export button moved to kebab menu (⋮) for better organization and future extensibility)',
         '🗑️ Delete Button v2.7.4 (Added delete button to all history cards - Processing/Image/Video, permanently deletes from both local storage and Wavespeed server API, bilingual confirmation dialog, red gradient styling with trash icon, bottom-right position on Image/Video cards, bottom-left on Processing cards, graceful error handling for API failures)',
         '🎨 Header Redesign v2.7.3 (Two-row responsive layout for mobile, combined Balance+TopUp button with 2-line display, improved typography hierarchy with consistent scaling, 44px minimum touch targets for accessibility, desktop-only build number to reduce clutter, shimmer hover effect on button)',
         '🔄 Complete History Management System v2.7.2 (Auto-resume polling after page refresh, Retry/Recovery buttons for stuck/failed videos with time-based display (5min/30min thresholds), Legacy data migration with intelligent model key guessing, Smart API sync preserving local data (prompts/settings) while updating status/URLs, Advanced search/filter/sort UI, Export history to JSON/CSV, Increased prompt display to 150 chars with tooltips)',
