@@ -15,7 +15,7 @@ const VIDIST_VERSION = {
     // Semantic Version (Major.Minor.Patch)
     major: 2,
     minor: 7,
-    patch: 6,
+    patch: 7,
 
     // Build number (MMDDYYYY format)
     build: 'git01052026',
@@ -44,6 +44,7 @@ const VIDIST_VERSION = {
 
     // Latest features changelog
     features: [
+        '🔧 Mobile CSS Fix v2.7.7 (Fixed history hide button not working on mobile - CSS specificity issue where ID selector overrode .hidden class, added !important override for #video-history.hidden)',
         '🎬 Video UI Enhancement v2.7.6 (Hover delete button on top-right of video preview with smooth fade-in effect and trash icon, Drag & drop to replace video directly without manual deletion, matches image upload UX patterns)',
         '🔍 Enhanced History Search v2.7.5 (Multi-field search for resolution (480p/720p/1080p), duration (3s/5s/10s), type (image/video/edit) - Export button moved to kebab menu (⋮) for better organization and future extensibility)',
         '🗑️ Delete Button v2.7.4 (Added delete button to all history cards - Processing/Image/Video, permanently deletes from both local storage and Wavespeed server API, bilingual confirmation dialog, red gradient styling with trash icon, bottom-right position on Image/Video cards, bottom-left on Processing cards, graceful error handling for API failures)',

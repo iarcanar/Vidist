@@ -119,6 +119,11 @@
         gap: 0.5rem !important;
     }
 
+    /* Fix: Ensure .hidden class works with ID selector specificity */
+    #video-history.hidden {
+        display: none !important;
+    }
+
     /* Modal - full screen บนมือถือ */
     #video-modal,
     #image-modal {
