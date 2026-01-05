@@ -2498,6 +2498,184 @@ Previous Releases:
         }
         // ========== END: Simple In-Memory Video Cache ==========
 
+        // ========== START: Touch Interaction System for History Cards ==========
+        // v2.8.0: Two-tap progressive disclosure for mobile history cards
+        let activeTouchCard = null;
+        let touchStartTime = 0;
+
+        function initHistoryTouchHandlers() {
+            const historyContainer = document.getElementById('video-history');
+            if (!historyContainer) return;
+
+            // Event delegation for performance
+            historyContainer.addEventListener('touchstart', handleHistoryTouchStart, { passive: true });
+            historyContainer.addEventListener('click', handleHistoryClick);
+
+            // Close buttons when tapping outside
+            document.addEventListener('touchstart', (e) => {
+                if (activeTouchCard && !activeTouchCard.contains(e.target)) {
+                    deactivateCard(activeTouchCard);
+                }
+            }, { passive: true });
+        }
+
+        function handleHistoryTouchStart(e) {
+            touchStartTime = Date.now();
+        }
+
+        function handleHistoryClick(e) {
+            const card = e.target.closest('.video-thumbnail, .image-thumbnail');
+            if (!card) return;
+
+            // Ignore if clicking on a button directly
+            if (e.target.closest('button')) return;
+
+            const isMobile = window.matchMedia('(max-width: 768px)').matches;
+            if (!isMobile) return; // Desktop: normal hover behavior
+
+            const touchDuration = Date.now() - touchStartTime;
+            if (touchDuration > 500) return; // Ignore long press/scroll
+
+            // First tap: Show buttons
+            if (activeTouchCard !== card) {
+                if (activeTouchCard) deactivateCard(activeTouchCard);
+                activateCard(card);
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            // Second tap: Open modal (default onclick handler will fire)
+        }
+
+        function activateCard(card) {
+            activeTouchCard = card;
+            card.classList.add('touch-active');
+
+            // Show buttons with staggered animation
+            const buttons = card.querySelectorAll('.action-button');
+            buttons.forEach((btn, index) => {
+                setTimeout(() => {
+                    btn.classList.remove('opacity-0');
+                    btn.classList.add('opacity-100', 'scale-in');
+                }, index * 50); // 50ms stagger
+            });
+        }
+
+        function deactivateCard(card) {
+            card.classList.remove('touch-active');
+            const buttons = card.querySelectorAll('.action-button');
+            buttons.forEach(btn => {
+                btn.classList.remove('opacity-100', 'scale-in');
+                btn.classList.add('opacity-0');
+            });
+            activeTouchCard = null;
+        }
+        // ========== END: Touch Interaction System ==========
+
+        // ========== START: Custom Dialog System (Cyberpunk Theme) ==========
+        // v2.8.0: Replace browser alert/confirm with custom styled dialogs
+
+        function showCustomAlert(message, title = '⚠️ แจ้งเตือน') {
+            return new Promise((resolve) => {
+                // Create modal overlay
+                const overlay = document.createElement('div');
+                overlay.className = 'fixed inset-0 z-[10000] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn';
+                overlay.style.animation = 'fadeIn 0.2s ease-out';
+
+                // Create dialog
+                overlay.innerHTML = `
+                    <div class="bg-[#1a1a2e] border-2 border-cyan-500/50 rounded-xl p-6 max-w-md w-full shadow-2xl shadow-cyan-500/20 transform animate-scaleIn" style="animation: scaleIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)">
+                        <div class="flex items-start gap-3 mb-4">
+                            <div class="text-3xl">${title.split(' ')[0]}</div>
+                            <h3 class="text-lg font-medium text-cyan-400 flex-1">${title.split(' ').slice(1).join(' ')}</h3>
+                        </div>
+                        <div class="text-gray-300 whitespace-pre-wrap mb-6 text-sm leading-relaxed">${message}</div>
+                        <button class="w-full py-3 px-4 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-white font-medium rounded-lg transition-all shadow-lg shadow-cyan-500/30 hover:shadow-cyan-500/50 hover:scale-[1.02]">
+                            ตกลง
+                        </button>
+                    </div>
+                `;
+
+                document.body.appendChild(overlay);
+
+                // Add animations to head if not exists
+                if (!document.querySelector('#custom-dialog-animations')) {
+                    const style = document.createElement('style');
+                    style.id = 'custom-dialog-animations';
+                    style.textContent = `
+                        @keyframes fadeIn {
+                            from { opacity: 0; }
+                            to { opacity: 1; }
+                        }
+                        @keyframes scaleIn {
+                            from { transform: scale(0.9); opacity: 0; }
+                            to { transform: scale(1); opacity: 1; }
+                        }
+                    `;
+                    document.head.appendChild(style);
+                }
+
+                // Close on button click
+                const button = overlay.querySelector('button');
+                button.onclick = () => {
+                    overlay.style.animation = 'fadeIn 0.15s ease-in reverse';
+                    setTimeout(() => {
+                        overlay.remove();
+                        resolve(true);
+                    }, 150);
+                };
+
+                // Focus button for keyboard accessibility
+                button.focus();
+            });
+        }
+
+        function showCustomConfirm(message, title = '❓ ยืนยัน') {
+            return new Promise((resolve) => {
+                const overlay = document.createElement('div');
+                overlay.className = 'fixed inset-0 z-[10000] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn';
+                overlay.style.animation = 'fadeIn 0.2s ease-out';
+
+                overlay.innerHTML = `
+                    <div class="bg-[#1a1a2e] border-2 border-purple-500/50 rounded-xl p-6 max-w-md w-full shadow-2xl shadow-purple-500/20 transform animate-scaleIn" style="animation: scaleIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)">
+                        <div class="flex items-start gap-3 mb-4">
+                            <div class="text-3xl">${title.split(' ')[0]}</div>
+                            <h3 class="text-lg font-medium text-purple-400 flex-1">${title.split(' ').slice(1).join(' ')}</h3>
+                        </div>
+                        <div class="text-gray-300 whitespace-pre-wrap mb-6 text-sm leading-relaxed">${message}</div>
+                        <div class="flex gap-3">
+                            <button data-action="cancel" class="flex-1 py-3 px-4 bg-gray-700 hover:bg-gray-600 text-white font-medium rounded-lg transition-all">
+                                ยกเลิก
+                            </button>
+                            <button data-action="confirm" class="flex-1 py-3 px-4 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-400 hover:to-pink-400 text-white font-medium rounded-lg transition-all shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 hover:scale-[1.02]">
+                                ยืนยัน
+                            </button>
+                        </div>
+                    </div>
+                `;
+
+                document.body.appendChild(overlay);
+
+                const closeDialog = (result) => {
+                    overlay.style.animation = 'fadeIn 0.15s ease-in reverse';
+                    setTimeout(() => {
+                        overlay.remove();
+                        resolve(result);
+                    }, 150);
+                };
+
+                overlay.querySelector('[data-action="cancel"]').onclick = () => closeDialog(false);
+                overlay.querySelector('[data-action="confirm"]').onclick = () => closeDialog(true);
+
+                // Focus confirm button
+                overlay.querySelector('[data-action="confirm"]').focus();
+            });
+        }
+
+        // Override global alert and confirm
+        window.alert = showCustomAlert;
+        window.confirm = showCustomConfirm;
+        // ========== END: Custom Dialog System ==========
+
         // ========== START: Prompt Persistence System ==========
         const PROMPT_STORAGE_KEY = 'vidist_last_prompt';
         const NEGATIVE_PROMPT_STORAGE_KEY = 'vidist_last_negative_prompt';
@@ -7555,7 +7733,7 @@ Previous Releases:
             const canPlay = !!videoUrl;
 
             const videoItemHTML = `
-                <div class="video-thumbnail rounded-xl overflow-hidden just-added slide-in ${canPlay ? 'cursor-pointer' : 'opacity-60 pointer-events-none'}" ${canPlay ? `onclick="openVideoModal(${index})"` : 'title="Video URL missing"'}>
+                <div class="video-thumbnail rounded-xl overflow-hidden just-added slide-in ${canPlay ? 'cursor-pointer' : 'opacity-60 pointer-events-none'}" data-index="${index}" ${canPlay ? `onclick="openVideoModalSafe(${index})"` : 'title="Video URL missing"'}>
                     <div class="relative bg-black aspect-video overflow-hidden">
                         ${canPlay ? `
                             <video
@@ -8229,7 +8407,7 @@ Previous Releases:
                 // ========== ✨ NEW: Render image card (v2.4.2) ==========
                 if (isImage) {
                     return `
-                            <div class="video-thumbnail image-thumbnail rounded-xl overflow-hidden border-2 border-pink-400/40 ${canPlay ? 'cursor-pointer' : 'opacity-60 pointer-events-none'}" ${canPlay ? `onclick="openHistoryImageModal('${escapeHtml(videoUrl)}', ${index})"` : 'title="Image URL missing"'}>
+                            <div class="video-thumbnail image-thumbnail rounded-xl overflow-hidden border-2 border-pink-400/40 ${canPlay ? 'cursor-pointer' : 'opacity-60 pointer-events-none'}" data-index="${index}" ${canPlay ? `onclick="openHistoryImageModalSafe('${escapeHtml(videoUrl)}', ${index})"` : 'title="Image URL missing"'}>
                                 <div class="relative bg-black aspect-video overflow-hidden">
                                     ${canPlay ? `
                                         <img
@@ -8246,7 +8424,7 @@ Previous Releases:
                                             <!-- Download Button (top-left) -->
                                             <button
                                                 onclick="event.stopPropagation(); downloadImage('${videoUrl}', '${video.id}', ${video.imageCounter || 'null'})"
-                                                class="absolute top-1 left-1 w-8 h-8 bg-gradient-to-br from-purple-500/90 to-cyan-500/90 hover:from-purple-400 hover:to-cyan-400 border border-purple-300/50 hover:border-cyan-300 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 z-20 cursor-pointer shadow-lg hover:shadow-purple-500/50 hover:scale-110"
+                                                class="action-button absolute top-1 left-1 w-8 h-8 bg-gradient-to-br from-purple-500/90 to-cyan-500/90 hover:from-purple-400 hover:to-cyan-400 border border-purple-300/50 hover:border-cyan-300 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 z-20 cursor-pointer shadow-lg hover:shadow-purple-500/50 hover:scale-110"
                                                 title="Download Image"
                                                 style="backdrop-filter: blur(10px);">
                                                 <svg class="w-4 h-4 text-white drop-shadow-[0_0_3px_rgba(255,255,255,0.8)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -8256,7 +8434,7 @@ Previous Releases:
                                             <!-- Reuse Button (bottom-left) -->
                                             <button
                                                 onclick="event.stopPropagation(); reuseVideoParameters(${escapeHtml(JSON.stringify(video))})"
-                                                class="absolute bottom-1 left-1 w-8 h-8 bg-gradient-to-br from-cyan-500/90 to-green-500/90 hover:from-cyan-400 hover:to-green-400 border border-cyan-300/50 hover:border-green-300 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 z-20 cursor-pointer shadow-lg hover:shadow-cyan-500/50 hover:scale-110"
+                                                class="action-button absolute bottom-1 left-1 w-8 h-8 bg-gradient-to-br from-cyan-500/90 to-green-500/90 hover:from-cyan-400 hover:to-green-400 border border-cyan-300/50 hover:border-green-300 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 z-20 cursor-pointer shadow-lg hover:shadow-cyan-500/50 hover:scale-110"
                                                 title="Re-use Parameters"
                                                 style="backdrop-filter: blur(10px);">
                                                 <svg class="w-4 h-4 text-white drop-shadow-[0_0_3px_rgba(255,255,255,0.8)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -8266,7 +8444,7 @@ Previous Releases:
                                             <!-- Delete Button (bottom-right) -->
                                             <button
                                                 onclick="event.stopPropagation(); deleteHistoryItem('${video.id}', ${index})"
-                                                class="absolute bottom-1 right-1 w-8 h-8 bg-gradient-to-br from-red-500/90 to-pink-500/90 hover:from-red-400 hover:to-pink-400 border border-red-300/50 hover:border-pink-300 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 z-20 cursor-pointer shadow-lg hover:shadow-red-500/50 hover:scale-110"
+                                                class="action-button absolute bottom-1 right-1 w-8 h-8 bg-gradient-to-br from-red-500/90 to-pink-500/90 hover:from-red-400 hover:to-pink-400 border border-red-300/50 hover:border-pink-300 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 z-20 cursor-pointer shadow-lg hover:shadow-red-500/50 hover:scale-110"
                                                 title="Delete Image Permanently"
                                                 style="backdrop-filter: blur(10px);">
                                                 <svg class="w-4 h-4 text-white drop-shadow-[0_0_3px_rgba(255,255,255,0.8)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -8298,7 +8476,7 @@ Previous Releases:
 
                 // ========== Existing: Video Card Rendering ==========
                 return `
-                            <div class="video-thumbnail rounded-xl overflow-hidden border-2 border-cyan-500/30 ${canPlay ? 'cursor-pointer' : 'opacity-60 pointer-events-none'}" ${canPlay ? `onclick="openVideoModal(${index})"` : 'title="Video URL missing"'}>
+                            <div class="video-thumbnail rounded-xl overflow-hidden border-2 border-cyan-500/30 ${canPlay ? 'cursor-pointer' : 'opacity-60 pointer-events-none'}" data-index="${index}" ${canPlay ? `onclick="openVideoModalSafe(${index})"` : 'title="Video URL missing"'}>
                                 <div class="relative bg-black aspect-video overflow-hidden">
                                     ${canPlay ? `
                                         <video
@@ -8318,7 +8496,7 @@ Previous Releases:
                                             <!-- Download Button -->
                                             <button
                                                 onclick="event.stopPropagation(); downloadVideoFromHistory(${index})"
-                                                class="absolute top-1 left-1 w-8 h-8 bg-gradient-to-br from-purple-500/90 to-cyan-500/90 hover:from-purple-400 hover:to-cyan-400 border border-purple-300/50 hover:border-cyan-300 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 z-20 cursor-pointer shadow-lg hover:shadow-purple-500/50 hover:scale-110"
+                                                class="action-button absolute top-1 left-1 w-8 h-8 bg-gradient-to-br from-purple-500/90 to-cyan-500/90 hover:from-purple-400 hover:to-cyan-400 border border-purple-300/50 hover:border-cyan-300 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 z-20 cursor-pointer shadow-lg hover:shadow-purple-500/50 hover:scale-110"
                                                 title="Download Video"
                                                 style="backdrop-filter: blur(10px);">
                                                 <svg class="w-4 h-4 text-white drop-shadow-[0_0_3px_rgba(255,255,255,0.8)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -8329,7 +8507,7 @@ Previous Releases:
                                             <!-- Re-use Button -->
                                             <button
                                                 onclick="event.stopPropagation(); reuseVideoParameters(${escapeHtml(JSON.stringify(video))})"
-                                                class="absolute bottom-1 left-1 w-8 h-8 bg-gradient-to-br from-cyan-500/90 to-green-500/90 hover:from-cyan-400 hover:to-green-400 border border-cyan-300/50 hover:border-green-300 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 z-20 cursor-pointer shadow-lg hover:shadow-cyan-500/50 hover:scale-110"
+                                                class="action-button absolute bottom-1 left-1 w-8 h-8 bg-gradient-to-br from-cyan-500/90 to-green-500/90 hover:from-cyan-400 hover:to-green-400 border border-cyan-300/50 hover:border-green-300 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 z-20 cursor-pointer shadow-lg hover:shadow-cyan-500/50 hover:scale-110"
                                                 title="Re-use Parameters"
                                                 style="backdrop-filter: blur(10px);">
                                                 <svg class="w-4 h-4 text-white drop-shadow-[0_0_3px_rgba(255,255,255,0.8)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -8341,7 +8519,7 @@ Previous Releases:
                                             ${video.status === 'failed' || video.status === 'canceled' ? `
                                                 <button
                                                     onclick="event.stopPropagation(); retryFailedVideo('${video.id}')"
-                                                    class="absolute top-1 right-1 px-2 py-1 bg-gradient-to-br from-orange-500/90 to-red-500/90 hover:from-orange-400 hover:to-red-400 border border-orange-300/50 hover:border-red-300 rounded-lg flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all duration-300 z-20 cursor-pointer shadow-lg hover:shadow-orange-500/50 hover:scale-110"
+                                                    class="action-button absolute top-1 right-1 px-2 py-1 bg-gradient-to-br from-orange-500/90 to-red-500/90 hover:from-orange-400 hover:to-red-400 border border-orange-300/50 hover:border-red-300 rounded-lg flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all duration-300 z-20 cursor-pointer shadow-lg hover:shadow-orange-500/50 hover:scale-110"
                                                     title="Retry with same parameters"
                                                     style="backdrop-filter: blur(10px);">
                                                     <svg class="w-3 h-3 text-white drop-shadow-[0_0_3px_rgba(255,255,255,0.8)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -8355,7 +8533,7 @@ Previous Releases:
                                             <!-- Delete Button (bottom-right) -->
                                             <button
                                                 onclick="event.stopPropagation(); deleteHistoryItem('${video.id}', ${index})"
-                                                class="absolute bottom-1 right-1 w-8 h-8 bg-gradient-to-br from-red-500/90 to-pink-500/90 hover:from-red-400 hover:to-pink-400 border border-red-300/50 hover:border-pink-300 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 z-20 cursor-pointer shadow-lg hover:shadow-red-500/50 hover:scale-110"
+                                                class="action-button absolute bottom-1 right-1 w-8 h-8 bg-gradient-to-br from-red-500/90 to-pink-500/90 hover:from-red-400 hover:to-pink-400 border border-red-300/50 hover:border-pink-300 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 z-20 cursor-pointer shadow-lg hover:shadow-red-500/50 hover:scale-110"
                                                 title="Delete Video Permanently"
                                                 style="backdrop-filter: blur(10px);">
                                                 <svg class="w-4 h-4 text-white drop-shadow-[0_0_3px_rgba(255,255,255,0.8)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -8388,6 +8566,11 @@ Previous Releases:
             `;
 
             console.log('✅ Video history rendered with', videoHistoryData.length, 'videos');
+
+            // v2.8.0: Initialize touch handlers for mobile
+            if (window.matchMedia('(max-width: 768px)').matches) {
+                initHistoryTouchHandlers();
+            }
         }
 
         // --- Load Video with Authentication ---
@@ -8800,6 +8983,19 @@ Previous Releases:
         }
 
         // --- Video Modal ---
+        // v2.8.0: Safe wrapper for mobile two-tap interaction
+        function openVideoModalSafe(index) {
+            const isMobile = window.matchMedia('(max-width: 768px)').matches;
+            if (isMobile) {
+                const card = document.querySelector(`.video-thumbnail[data-index="${index}"], .image-thumbnail[data-index="${index}"]`);
+                if (card && !card.classList.contains('touch-active')) {
+                    return; // First tap, don't open modal
+                }
+            }
+            // Desktop or second tap: open modal
+            openVideoModal(index);
+        }
+
         async function openVideoModal(index) {
             // Use completedVideosData instead of videoHistoryData to avoid index mismatch
             const video = completedVideosData[index];
@@ -8836,6 +9032,9 @@ Previous Releases:
                 // Wait for video to load and be ready to play
                 await loadVideoInModal(video.url, video.provider, video.id);
 
+                // Initialize click/tap toggle for play/pause (especially for mobile)
+                initVideoPlayerClickToggle();
+
                 // Play video when ready
                 await modalVideoPlayer.play();
                 console.log('✅ Video is playing');
@@ -8849,6 +9048,32 @@ Previous Releases:
                     console.error('❌ Error in openVideoModal:', error);
                     // Video is ready but couldn't auto-play - user can still manually play
                 }
+            }
+        }
+
+        // ========== Video Player Tap/Click Toggle (Mobile) ==========
+        function initVideoPlayerClickToggle() {
+            const videoPlayer = document.getElementById('modal-video-player');
+            if (!videoPlayer) return;
+
+            // Remove existing listener if any
+            videoPlayer.removeEventListener('click', toggleVideoPlayPause);
+
+            // Add click/tap handler to toggle play/pause
+            videoPlayer.addEventListener('click', toggleVideoPlayPause);
+        }
+
+        function toggleVideoPlayPause(e) {
+            const videoPlayer = e.target;
+
+            // Don't interfere with control bar clicks
+            // Only toggle if clicking the video area itself
+            if (videoPlayer.paused) {
+                videoPlayer.play().catch(err => {
+                    console.warn('Cannot play video:', err);
+                });
+            } else {
+                videoPlayer.pause();
             }
         }
 
@@ -9451,6 +9676,19 @@ Previous Releases:
 
         // ========== ✨ NEW: History Image Modal (v2.4.2) ==========
         // NOTE: This is for HISTORY panel cards. Preview panel uses openImageModal() at line ~7734
+
+        // v2.8.0: Safe wrapper for mobile two-tap interaction
+        function openHistoryImageModalSafe(imageUrl, imageIndex) {
+            const isMobile = window.matchMedia('(max-width: 768px)').matches;
+            if (isMobile) {
+                const card = document.querySelector(`.image-thumbnail[data-index="${imageIndex}"]`);
+                if (card && !card.classList.contains('touch-active')) {
+                    return; // First tap, don't open modal
+                }
+            }
+            // Desktop or second tap: open modal
+            openHistoryImageModal(imageUrl, imageIndex);
+        }
 
         // Open history image in full-screen modal
         function openHistoryImageModal(imageUrl, imageIndex) {
