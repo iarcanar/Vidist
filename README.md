@@ -1,4 +1,4 @@
-# VIDIST - แพลตฟอร์มสร้างวิดีโอด้วย AI (v2.6.0)
+# VIDIST - แพลตฟอร์มสร้างวิดีโอด้วย AI (v2.7.9)
 
 **VIDIST** คือเว็บแอปพลิเคชันสำหรับสร้างวิดีโอด้วย AI ที่เน้นความสวยงามในสไตล์ Cyberpunk และรองรับโมเดลวิดีโอที่ทันสมัยที่สุดในปัจจุบันผ่าน Wavespeed API และ Gemini 2.0 Flash
 
@@ -6,7 +6,7 @@
 
 ## 🌐 Live Demo
 
-**Access VIDIST online:** Deploy ผ่าน GitHub Pages ที่ `https://YOUR_USERNAME.github.io/vidist/`
+**Access VIDIST online:** https://iarcanar.github.io/Vidist/
 
 **หมายเหตุ:**
 - API keys จะถูกเก็บแยกตาม domain (localStorage)
@@ -17,17 +17,21 @@
 ---
 
 ## ✨ ฟีเจอร์เด่น
-- 💖 **Keep: Prompt Collection**: บันทึก Prompt ที่ชอบ (Grid 3 คอลัมน์, Copy/Reuse/Delete, auto-save, ตรวจจับซ้ำ, 3-line preview, copy feedback)
+
+- 💖 **Keep: Prompt Collection**: บันทึก Prompt ที่ชอบ (Grid 3 คอลัมน์, Copy/Reuse/Delete, auto-save, ตรวจจับซ้ำ, 3-line preview)
 - 🎞️ **โมเดลวิดีโอหลากหลาย**: รองรับ Wan 2.5, Wan 2.6 และ Kling Video O1
 - 🎭 **โหมดสร้างสรรค์**:
-    - **T2V (Text-to-Video)**: สร้างวิดีโอจากข้อความ (รองรับ Wan 2.5)
-    - **I2V (Image-to-Video)**: สร้างวิดีโอจากรูปภาพ (รองรับทุกโมเดล)
-    - **Video Extend**: ต่อความยาววิดีโอเดิมด้วย AI
+  - **T2V (Text-to-Video)**: สร้างวิดีโอจากข้อความ (รองรับ Wan 2.5)
+  - **I2V (Image-to-Video)**: สร้างวิดีโอจากรูปภาพ (รองรับทุกโมเดล)
+  - **Video Extend**: ต่อความยาววิดีโอเดิมด้วย AI
 - 🧠 **AI Prompt Craft**: ระบบช่วยแต่ง Prompt ให้สวยงามและสมจริงด้วย Gemini 2.0 Flash
-- 📥 **ระบบบันทึกวิดีโอ (3-Tier Cache)**: วิดีโอที่สร้างแล้วจะถูกเก็บไว้ในเบราว์เซอร์ (LRU + IndexedDB) ไม่หายเวลา Refresh หน้าจอ
-- ⚡ **Red Mode + Intensity Levels**: โหมดพิเศษสำหรับการสร้าง Prompt แบบอิสระ (Unfiltered) พร้อมควบคุมระดับความเข้มข้น 4 ระดับ (I, II, III, Grok)
-- 🎤 **Custom Dialog Override**: กำหนด Dialog & Sound Effect เองแทนให้ AI สร้าง
-- 📋 **Clipboard Paste (Ctrl+V)**: วางภาพจาก Clipboard โดยกด Ctrl+V ทุกที่ (รองรับคีย์บอร์ดไทย)
+- 📥 **ระบบบันทึกวิดีโอ (3-Tier Cache)**: เก็บไว้ใน Browser (LRU + IndexedDB) ไม่หายเวลา Refresh
+- ⚡ **Red Mode + Intensity Levels**: โหมดพิเศษ 4 ระดับ (I, II, III, Grok)
+- 🎤 **Custom Dialog Override**: กำหนด Dialog & Sound Effect เอง
+- 📋 **Clipboard Paste (Ctrl+V)**: วางภาพจาก Clipboard
+- 📱 **Mobile-Optimized UI**: Responsive design ที่ทำงานสมบูรณ์บนมือถือทุกขนาด
+- 🔍 **Advanced History Search**: ค้นหาโดยข้อความ, ความละเอียด (480p/720p/1080p), ระยะเวลา (3s/5s/10s), ประเภท (image/video/edit)
+- 🔄 **Version Auto-Update**: ระบบ CI/CD อัตโนมัติ
 
 ---
 
@@ -37,115 +41,184 @@
 1. คลิกที่ไอคอนเฟือง (Settings) เพื่อเปิดส่วนการตั้งค่า
 2. ใส่ **Wavespeed API Key** เพื่อใช้สร้างวิดีโอ
 3. ใส่ **Gemini API Key** เพื่อใช้ระบบช่วยแต่ง Prompt
-4. ระบบจะแสดงยอดเงินคงเหลือ (Balance) ให้เห็นแบบ Real-time
+4. ระบบจะแสดงยอดเงินคงเหลือ (Balance) แบบ Real-time
 
 ### 2. การสร้างวิดีโอ
-1. **เลือกโมเดล**: เลือกโมเดลที่ต้องการ (เช่น Wan 2.6 สำหรับคุณภาพสูงสุด)
-2. **ใส่ Prompt**: พิมพ์สิ่งที่ต้องการเห็น (สามารถใช้ปุ่ม "Craft" เพื่อให้ AI ช่วยเกลาข้อความให้)
-3. **อัปโหลดรูปภาพ**: สำหรับโหมด I2V ให้ลากรูปภาพมาวางในช่องอัปโหลด **หรือ** กด **Ctrl+V** เพื่อวางจาก Clipboard
-4. **ตั้งค่าเพิ่มเติม**: เลือกความละเอียด (720p/1080p) และระยะเวลาที่ต้องการ
-5. **กด Generate**: รอระบบประมวลผล (มีแถบความคืบหน้าแจ้งสถานะ)
+1. **เลือกโมเดล**: เลือกโมเดลที่ต้องการ (เช่น Wan 2.6)
+2. **ใส่ Prompt**: พิมพ์สิ่งที่ต้องการเห็น (ใช้ "Craft" เพื่อให้ AI ช่วยเกลา)
+3. **อัปโหลดรูปภาพ**: สำหรับ I2V ลากรูปภาพหรือกด **Ctrl+V**
+4. **ตั้งค่าเพิ่มเติม**: เลือก Resolution (720p/1080p) และระยะเวลา
+5. **กด Generate**: รอระบบประมวลผล
 
 ### 3. การใช้ AI Prompt Craft
-1. **อัปโหลดรูปภาพ**: ลากหรือวางรูปภาพที่ต้องการให้ AI วิเคราะห์
-2. **ใส่คำอธิบาย**: พิมพ์สิ่งที่ต้องการให้เกิดขึ้นในวิดีโอ
+1. **อัปโหลดรูปภาพ**: ลากหรือวางรูปภาพ
+2. **ใส่คำอธิบาย**: พิมพ์สิ่งที่ต้องการให้เกิด
 3. **เลือกโหมด**:
-   - 🎨 **Creative Mode** (ค่าเริ่มต้น): AI สร้าง Prompt ที่ปลอดภัยและสร้างสรรค์
-   - 🔴 **Red Mode** (เปิดได้เมื่อต้องการ): AI สร้าง Prompt ที่ไม่มีตัวกรอง
-4. **เลือกระดับความเข้มข้น** (Red Mode เท่านั้น):
-   - เลือก 1 จาก 4 ระดับ: **I**, **II**, **III**, หรือ **Grok**
-   - แต่ละระดับมีวิธีการสร้าง Prompt ที่แตกต่างกัน
-5. **กำหนด Dialog เอง** (ทำเครื่องหมาย ◎ OVERRIDE):
-   - เปิด checkbox เพื่อป้อน Dialog & Sound Effect เอง
-   - AI จะไม่สร้าง Dialog แทนใช้ที่คุณระบุ
-6. **กด Craft**: รอให้ AI วิเคราะห์และสร้าง Prompt ที่สมบูรณ์
-7. **คัดลอกไปยัง Prompt**: Prompt ที่สร้างจะปรากฏในกล่อง Prompt พร้อมใช้
+   - 🎨 **Creative Mode**: Safe & creative
+   - 🔴 **Red Mode**: Unfiltered
+4. **เลือกระดับ** (Red Mode): I, II, III, หรือ Grok
+5. **กำหนด Dialog** (ทำเครื่องหมาย ◎ OVERRIDE): ป้อน Dialog & Sound Effect เอง
+6. **กด Craft**: รอให้ AI สร้าง Prompt
 
 ### 4. การจัดการประวัติ (History)
-- วิดีโอที่สร้างเสร็จจะปรากฏในส่วน **History** ด้านขวาล่าง
-- สามารถคลิกที่รูป Thumbnail เพื่อเปิดดูวิดีโอแบบเต็มจอ
-- มีปุ่ม **Download** เพื่อเซฟวิดีโอลงเครื่องได้ทันที
-- **ข้อมูลในประวัติจะแสดงครบถ้วน** (Prompt, Duration, Resolution) แม้จะ Refresh หน้าจอ ได้เนื่องจากระบบ Task Input Map บันทึกข้อมูลอินพุตไว้
-- **🔍 ระบบ Filter** (v2.4.4): คลิกไอคอน filter เพื่อสลับโหมดการแสดงผล
-  - **All videos and images** (สีฟ้า) - แสดงทั้งวิดีโอและรูปภาพ
-  - **Videos only** (สีม่วง) - แสดงเฉพาะวิดีโอ (รวม animation thumbnails)
-  - **Images only** (สีฟ้า) - แสดงเฉพาะรูปภาพที่แก้ไข (Image Edit)
-
----
-
-## 🔄 Task Input Map System (ระบบเก็บข้อมูลอินพุต)
-
-เมื่อคุณสร้างวิดีโอใหม่ VIDIST จะบันทึกข้อมูลต่อไปนี้ลงใน localStorage:
-- 📝 **Prompt**: ข้อความที่คุณป้อน
-- ⏱️ **Duration**: ระยะเวลาของวิดีโอ
-- 📐 **Resolution**: ความละเอียด (720p/1080p)
-- 🎬 **Model**: โมเดลที่ใช้ (Wan 2.5, 2.6, Kling O1)
-- 🎨 **Shot Type**: ประเภทมุมมอง
-- ✨ **Prompt Expansion**: สถานะการขยายข้อความอัตโนมัติ
-
-ข้อมูลเหล่านี้จะปรากฏในส่วน History เสมอ แม้ว่า:
-- ✅ Refresh หน้า
-- ✅ ปิด/เปิดแท็บเบราว์เซอร์
-- ✅ ลบ Cache ของ API
-
-**ประสิทธิภาพ**:
-- ระบบจะเก็บข้อมูล Task Input ล่าสุด **50 รายการ** เท่านั้น
-- ประวัติวิดีโอเก็บ **30 รายการ** เท่านั้น
-- **ไม่เก็บรูปภาพ base64** ใน localStorage (ใหญ่เกินไป) - เก็บแค่ URL
-- ระบบจะทำความสะอาดอัตโนมัติเมื่อพื้นที่ใกล้เต็ม
+- วิดีโอที่สร้างเสร็จปรากฏในส่วน **History**
+- คลิก Thumbnail เพื่อดูแบบเต็มจอ
+- ปุ่ม **Download** เพื่อเซฟวิดีโอ
+- ปุ่ม **Hide** เพื่อซ่อนเนื้อหา (sensitive content)
+- ปุ่ม **Delete** เพื่อลบออก
+- 🔍 **ระบบ Filter & Search**:
+  - ค้นหาโดยข้อความ: "cat", "sunset"
+  - ค้นหาโดย Resolution: "480", "480p", "720p", "1080p"
+  - ค้นหาโดย Duration: "3s", "5s", "10s"
+  - ค้นหาโดย Type: "image", "video", "edit"
 
 ---
 
 ## 💾 ระบบการเก็บข้อมูล (Storage)
-เราให้ความสำคัญกับความรวดเร็วและประหยัด API ของคุณ:
-1. **Memory Cache**: เก็บวิดีโอล่าสุดไว้ในแรมเพื่อการเล่นที่ทันใจ
-2. **IndexedDB**: บันทึกไฟล์วิดีโอลงในเครื่องของคุณ เพื่อให้คุณกลับมาดูได้ทุกเมื่อโดยไม่ต้องโหลดใหม่จากเซิร์ฟเวอร์
-3. **Auto-Clean**: ระบบจะล้างไฟล์ที่เก่ากว่า 24 ชั่วโมงโดยอัตโนมัติเพื่อประหยัดพื้นที่เครื่อง
+
+1. **Memory Cache**: เก็บวิดีโอล่าสุดในแรม
+2. **IndexedDB**: บันทึกวิดีโอลงเครื่อง
+3. **Auto-Clean**: ล้างไฟล์เก่า 24 ชั่วโมงโดยอัตโนมัติ
 
 ---
 
 ## 📄 ข้อมูลทางเทคนิค
-- **Frontend**: HTML5, CSS3, Vanilla JavaScript
+
+- **Frontend**: HTML5, CSS3, Vanilla JavaScript (No framework)
 - **API**: Wavespeed API V3, Gemini 2.0 Flash
-- **Version**: v2.5.9 Build 01022026
-- **Latest Features** (v2.5.9):
-  - 🧹 UI Cleanup (Removed legacy "GENERATED VIDEO" player section - videos now viewable exclusively through History section, cleaner streamlined interface)
-- **Previous Features** (v2.5.8):
-  - 🎯 Red Mode Simplification (Removed rigid SCOPE system - AI now interprets user intent directly, added heterosexual & lesbian examples, made 12-step progression flexible)
-- **Older Features** (v2.5.7):
-  - 🔧 Hologram & Storage Fix (Fixed overlay display location + auto image compression: 1500KB→400KB max to prevent localStorage quota errors)
-- **Older Features** (v2.5.6):
-  - ✨ Video Generation Hologram Effect (Restored hologram animation on source image during video generation for visual consistency with Image Edit mode)
-- **Older Features** (v2.5.5):
-  - 🎯 Hardcore Mode Scope Control (Fixed unwanted content: 3 scope levels - Body focus, Masturbation, Full sequence. Enhances details instead of adding unwanted content)
-- **Older Features** (v2.5.4):
-  - 🖼️ Image Edit Prompt Fix (Fixed Image Edit generating video-style prompts: Added English IMG level, removed Dialog/Speech from Image Edit, separated IMG and Video prompt structures)
-- **Older Features** (v2.5.2):
-  - ⚡ Hologram Animation Speed Adjustment (Reverted to diagonal gradient pattern, kept 20% slower animation speed for better visibility)
-- **Older Features** (v2.4.9):
-  - ✨ Reuse UX Improvements (Removed auto-scroll on reuse button, added glow effect to prompt box for better visibility)
-- **Older Features** (v2.4.8):
-  - 🎨 Border Card Differentiation (Video cards use cyan borders, Image cards use light pink borders for visual distinction)
-- **Older Features** (v2.4.7):
-  - 🔧 History Filter Fix (animation thumbnails persist during processing in all filter modes)
-  - 🇨🇳 Chinese Negative Prompts (auto-translate to Simplified Chinese for Wan models in Red Mode)
-  - 🎯 Simplified Reuse System (reuse only prompts/craft, no model/settings restoration)
-  - 🐛 History Filter Bug Fixes (animation thumbnails during filter, reuse index mismatch fixed)
-  - 💖 Keep: Prompt Collection (save prompts, copy/reuse/delete, auto-save)
-- **Last Updated**: January 2, 2026
+- **Deployment**: GitHub Pages
+- **Current Version**: v2.7.9 (Build git01052026)
+
+### Latest Updates (v2.7.9)
+- 📱 Mobile Language Selector Fix - Moved to 768px media query for all mobile devices
+
+### Recent Updates (v2.7.6 - v2.7.8)
+- 🎬 Video UI Enhancement (v2.7.6) - Hover delete button + drag & drop replace
+- 🔧 Mobile CSS Fix (v2.7.7) - History hide button specificity issue
+- 📱 Mobile Language Selector (v2.7.8) - EN/TH/JA buttons as 3 columns
+
+### Version History
+- **v2.7.5**: Enhanced History Search & Kebab Menu
+- **v2.7.4**: Delete Button (Image/Video/Processing cards)
+- **v2.7.3**: Header Redesign - Mobile-First Responsive
+- **v2.7.2**: Complete History Management System
+- **v2.7.1**: History Prompt Persistence Fix
+- **v2.7.0**: Credit Balance Redesign
+
+**Last Updated**: January 5, 2026
 
 ---
 
-## 📚 เอกสารเพิ่มเติม
+## 📚 เอกสารสำคัญ
 
-- **📖 คู่มือพัฒนา**: [`docs/development/`](docs/development/)
-  - [DEVELOPMENT.md](docs/development/DEVELOPMENT.md) - Technical reference & changelog
-  - [AI_DEVELOPMENT_PROTOCOL.md](docs/development/AI_DEVELOPMENT_PROTOCOL.md) - AI development guidelines
+### สำหรับนักพัฒนา (Developers)
+- **[AI_DEVELOPMENT_PROTOCOL.md](AI_DEVELOPMENT_PROTOCOL.md)** - Protocol สำหรับ AI assistants
+  - Version update rules
+  - Commit message format
+  - Pre-commit hook enforcement
+  - Changelog entry format
 
-- **🧠 สมุดความรู้**: [`docs/knowledge/`](docs/knowledge/)
-  - [PROPRIETARY_PROMPT_ENGINEERING.md](docs/knowledge/PROPRIETARY_PROMPT_ENGINEERING.md) - Prompt engineering techniques
+### สำหรับ Version Management
+- **[js/version.js](js/version.js)** - Single source of truth สำหรับ version
+  - Semantic versioning (Major.Minor.Patch)
+  - Build metadata (gitMMDDYYYY format)
+  - Changelog entries
+  - Never hardcode versions in HTML!
 
-- **🗄️ เอกสารเก่า**: [`docs/archive/`](docs/archive/) - Historical documentation & implementation plans
+### สำหรับ Version Automation
+- **.git/hooks/pre-commit** - Git hook to enforce version updates
+  - Blocks commit if index.html changed but version.js not updated
+  - Shows clear error message with instructions
+
+### Version Control
+```
+Rules:
+□ Always update js/version.js when modifying index.html
+□ Increment patch for any change (bug fix, feature, CSS)
+□ Add changelog entry to features array
+□ Pre-commit hook will BLOCK commits that violate this
+```
 
 ---
-© 2025 VIDIST Team - *Create your reality, frame by frame.*
+
+## 🐛 ปัญหาที่แก้ไขล่าสุด
+
+### v2.7.9 - Mobile Language Selector Fix
+- **ปัญหา**: Language buttons (EN/TH/JA) แสดงเป็น 3 แถวบนมือถือ
+- **แก้ไข**: Moved CSS fix to 768px media query (from 480px)
+- **ผลลัพธ์**: ปุ่มแสดงเป็น 1 แถว 3 ปุ่ม บนมือถือทั้งหมด
+
+### v2.7.7 - Mobile History Hide Button
+- **ปัญหา**: ปุ่ม Hide ไม่ทำงาน เพราะ CSS specificity issue
+- **แก้ไข**: Added `#video-history.hidden { display: none !important; }`
+- **สาเหตุ**: ID selector (#video-history) มี specificity สูงกว่า .hidden class
+
+---
+
+## 🚀 Installation & Development
+
+```bash
+# Clone repository
+git clone https://github.com/iarcanar/Vidist.git
+cd Vidist
+
+# Open with Live Server
+# 1. Install "Live Server" extension in VS Code
+# 2. Right-click index.html → "Open with Live Server"
+# 3. Press F12 → Toggle Device Toolbar (Ctrl+Shift+M)
+# 4. Select device: iPhone 12 Pro, etc.
+
+# For mobile testing at 390x844 (iPhone dimensions)
+# Open DevTools → Toggle Device Toolbar → Select "iPhone 12 Pro"
+```
+
+---
+
+## 📋 Pre-commit Hook Setup
+
+The project includes a Git pre-commit hook that enforces version updates:
+
+```bash
+# Hook location: .git/hooks/pre-commit
+# Automatically runs before every commit
+# Blocks commit if:
+#   - index.html is modified
+#   - But js/version.js is NOT modified
+```
+
+**To bypass (emergency only):**
+```bash
+git commit --no-verify -m "Your message"
+```
+
+---
+
+## 🤝 Contributing
+
+When making changes to the codebase:
+
+1. Read [AI_DEVELOPMENT_PROTOCOL.md](AI_DEVELOPMENT_PROTOCOL.md)
+2. If modifying `index.html`, you MUST also update `js/version.js`
+3. Increment patch version number
+4. Add changelog entry
+5. Commit will be blocked if version not updated
+
+---
+
+## 📞 Support
+
+- 🐛 **Report Bugs**: GitHub Issues
+- 💬 **Questions**: Check existing issues first
+- 📝 **Documentation**: Read comments in code
+
+---
+
+## 📄 License & Credits
+
+© 2025-2026 VIDIST Team - *Create your reality, frame by frame.*
+
+**Technologies Used:**
+- Wavespeed API (Video Generation)
+- Gemini 2.0 Flash (Prompt Enhancement)
+- Tailwind CSS (Styling)
+- Vanilla JavaScript (No dependencies)
