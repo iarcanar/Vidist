@@ -15,7 +15,7 @@ const VIDIST_VERSION = {
     // Semantic Version (Major.Minor.Patch)
     major: 2,
     minor: 8,
-    patch: 4,
+    patch: 5,
 
     // Build number (MMDDYYYY format)
     build: 'git01062026',
@@ -44,6 +44,7 @@ const VIDIST_VERSION = {
 
     // Latest features changelog
     features: [
+        '✨ Equal Size Scaling v2.8.5 (Both base and floating images now scale to same size 238px max, removed scale animation - only translate offset, hologram effect perfectly fits floating image, base image scales with editing-scaled class, centered flexbox layout)',
         '🔧 Positioning Fix v2.8.4 (Fixed floating container position - added inset-0 to properly overlay base image, floating image now appears at correct location with 30px right and 30px up offset)',
         '🔧 Syntax Fix v2.8.3 (Fixed duplicate const sourceImage declaration causing SyntaxError, reuses variable from line 6675)',
         '✨ Floating Processing Visual v2.8.2 (Image edit shows floating scaled image with hologram overlay, dimmed base image, real-time progress updates, smooth float-up-right animation on start, float-away exit animation, 85% scale with shadow and cyan glow, stays within 280px container bounds, callback-based sequential animations, responsive design for mobile, professional depth and visual hierarchy)',

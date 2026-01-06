@@ -6511,12 +6511,18 @@ Previous Releases:
             const floatingImage = document.getElementById('floating-processing-image');
             const floatingText = document.getElementById('floating-status-text');
             const dimOverlay = document.getElementById('base-image-dim');
+            const baseImage = document.getElementById('image-preview-left');
 
             if (!floatingContainer || !floatingImage) return;
 
             // Set source image
             floatingImage.src = sourceImageSrc;
             floatingText.textContent = `processing... ${initialProgress}%`;
+
+            // Scale base image to match floating image size
+            if (baseImage) {
+                baseImage.classList.add('editing-scaled');
+            }
 
             // Show elements
             floatingContainer.classList.remove('hidden', 'floating-exit');
@@ -6541,6 +6547,7 @@ Previous Releases:
         function hideFloatingProcessing(callback) {
             const floatingContainer = document.getElementById('floating-processing-container');
             const dimOverlay = document.getElementById('base-image-dim');
+            const baseImage = document.getElementById('image-preview-left');
 
             if (!floatingContainer) {
                 if (callback) callback();
@@ -6551,6 +6558,11 @@ Previous Releases:
             floatingContainer.classList.remove('floating-active');
             floatingContainer.classList.add('floating-exit');
             dimOverlay.classList.remove('active');
+
+            // Remove scaling from base image
+            if (baseImage) {
+                baseImage.classList.remove('editing-scaled');
+            }
 
             // Wait for animation to complete
             setTimeout(() => {
