@@ -1765,20 +1765,20 @@ Previous Releases:
 
         // ฟังก์ชันทำความสะอาด localStorage อัจฉริยะ
         function smartCleanupStorage() {
-            console.log('🧹 Starting smart storage cleanup...');
+            console.log('🧹 Starting silent storage cleanup...');
 
             try {
                 // 1. ลบ image cache ก่อน (ใหญ่ที่สุด)
                 localStorage.removeItem(IMAGE_CACHE_KEY);
                 console.log('✅ Removed image cache');
 
-                // 2. เก็บ videoHistory แค่ 15 รายการล่าสุด
+                // 2. เก็บ videoHistory แค่ 10 รายการล่าสุด (ลดจาก 15 เพื่อประหยัดพื้นที่)
                 const storedHistory = localStorage.getItem('videoHistory');
                 if (storedHistory) {
                     try {
                         const history = JSON.parse(storedHistory);
-                        if (Array.isArray(history) && history.length > 15) {
-                            const recentHistory = history.slice(0, 15);
+                        if (Array.isArray(history) && history.length > 10) {
+                            const recentHistory = history.slice(0, 10);
                             localStorage.setItem('videoHistory', JSON.stringify(recentHistory));
                             videoHistoryData = recentHistory;
                             console.log(`✅ Reduced videoHistory to ${recentHistory.length} items`);
@@ -1808,7 +1808,7 @@ Previous Releases:
             }
         }
 
-        // ฟังก์ชันบันทึกลง localStorage แบบปลอดภัย (auto-cleanup on quota exceeded)
+        // ฟังก์ชันบันทึกลง localStorage แบบปลอดภัย (auto-cleanup SILENT - ไม่แจ้งเตือน)
         function safeSetLocalStorage(key, value) {
             // เช็คขนาดของข้อมูลที่จะบันทึก
             const dataSizeKB = (value.length / 1024).toFixed(2);
@@ -1819,16 +1819,9 @@ Previous Releases:
                 return true;
             } catch (error) {
                 if (error.name === 'QuotaExceededError') {
-                    console.warn(`⚠️ localStorage quota exceeded for key "${key}" (${dataSizeKB}KB), auto-cleaning...`);
+                    console.log(`🔄 localStorage quota exceeded for key "${key}" (${dataSizeKB}KB), auto-cleaning silently...`);
 
-                    // ถ้าข้อมูลใหญ่กว่า 500KB แสดงว่าไม่ควรเก็บใน localStorage
-                    if (value.length > 500 * 1024) {
-                        console.error(`❌ Data too large for localStorage: ${dataSizeKB}KB (max recommended: 500KB)`);
-                        console.error(`💡 Key: "${key}" - Consider using IndexedDB or not caching this data`);
-                        return false;
-                    }
-
-                    // ทำความสะอาดและลองใหม่
+                    // ทำความสะอาดและลองใหม่ (ไม่แจ้งเตือน)
                     if (smartCleanupStorage()) {
                         invalidateLocalStorageCache(); // ✅ Cache invalidated by cleanup
                         try {
@@ -1837,10 +1830,32 @@ Previous Releases:
                             console.log(`✅ Saved after cleanup: ${key} (${dataSizeKB}KB)`);
                             return true;
                         } catch (retryError) {
-                            console.error(`❌ Failed even after cleanup: ${key} (${dataSizeKB}KB)`);
-                            console.error('💡 Data might be too large for localStorage');
-                            alert('⚠️ เนื้อที่เก็บข้อมูลเต็ม\n\nไม่สามารถบันทึกข้อมูลได้ (ข้อมูลอาจใหญ่เกินไป)\nกรุณาลบประวัติเก่า (คลิกปุ่ม Clear History)');
-                            return false;
+                            // ลองทำความสะอาดแบบ aggressive - ลบข้อมูลเก่าออกเพิ่ม
+                            console.log('🔄 First cleanup not enough, trying aggressive cleanup...');
+
+                            // ลบ videoHistory ทั้งหมดถ้ายังไม่พอ
+                            localStorage.removeItem('videoHistory');
+                            videoHistoryData = [];
+
+                            // ลบ attached image/video เก่า
+                            localStorage.removeItem(ATTACHED_IMAGE_STORAGE_KEY);
+                            localStorage.removeItem('vidist_attached_video');
+
+                            // ลบ Keep prompts เก่า
+                            localStorage.removeItem('vidist_keep_prompts');
+
+                            console.log('✅ Aggressive cleanup completed');
+
+                            try {
+                                localStorage.setItem(key, value);
+                                invalidateLocalStorageCache();
+                                console.log(`✅ Saved after aggressive cleanup: ${key} (${dataSizeKB}KB)`);
+                                return true;
+                            } catch (finalError) {
+                                // ถ้ายังไม่ได้ ก็ข้ามไป ไม่แจ้งเตือนเลย (SILENT MODE)
+                                console.log(`ℹ️ Could not save ${key} - data too large, skipping silently`);
+                                return false;
+                            }
                         }
                     }
                 }

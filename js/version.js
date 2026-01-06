@@ -15,7 +15,7 @@ const VIDIST_VERSION = {
     // Semantic Version (Major.Minor.Patch)
     major: 2,
     minor: 8,
-    patch: 6,
+    patch: 7,
 
     // Build number (MMDDYYYY format)
     build: 'git01062026',
@@ -44,6 +44,7 @@ const VIDIST_VERSION = {
 
     // Latest features changelog
     features: [
+        '🔇 Silent Auto-Cleanup v2.8.7 (Removed storage quota alert when pasting images, aggressive auto-cleanup deletes oldest data silently, reduced videoHistory to 10 items, no user interruption during paste)',
         '🔧 Display Override Fix v2.8.6 (Fixed floating container showing when hidden - display:flex was overriding .hidden class due to ID selector specificity, now uses :not(.hidden) selector for flexbox)',
         '✨ Equal Size Scaling v2.8.5 (Both base and floating images now scale to same size 238px max, removed scale animation - only translate offset, hologram effect perfectly fits floating image, base image scales with editing-scaled class, centered flexbox layout)',
         '🔧 Positioning Fix v2.8.4 (Fixed floating container position - added inset-0 to properly overlay base image, floating image now appears at correct location with 30px right and 30px up offset)',
