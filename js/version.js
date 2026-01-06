@@ -15,7 +15,7 @@ const VIDIST_VERSION = {
     // Semantic Version (Major.Minor.Patch)
     major: 2,
     minor: 8,
-    patch: 12,
+    patch: 13,
 
     // Build number (MMDDYYYY format)
     build: 'git01062026',
@@ -44,6 +44,7 @@ const VIDIST_VERSION = {
 
     // Latest features changelog
     features: [
+        '🎯 Minimal Image History v2.8.13 (MAJOR CHANGE: Reduced image edit history from 10 → 2 images only (original + latest edited), F5 refresh keeps only current viewing image (1 image), Previous/Next buttons still work for 2-image navigation, Eliminates localStorage quota issues completely)',
         '🔒 localStorage Quota Data Loss Fix v2.8.12 (CRITICAL FIX: Aggressive cleanup now keeps 5 most recent history items instead of wiping everything - prevents data loss when localStorage is full, Added quota handling to image edit history with auto-reduce to 3 images, History preserved during localStorage pressure)',
         '🚫 Non-Interactive Processing Cards v2.8.11 (Removed delete button from processing cards - cards are now purely status displays, no hover interactions during video/image generation, prevents accidental cancellation, cleaner separation between active processing and completed items)',
         '🗑️ Simplified Delete Dialogs v2.8.10 (Removed redundant double confirmations - single short question "ต้องการลบรายการนี้?" with custom cyberpunk dialog, silent success (no alert after deletion), all messages in Thai, cleaner UX without interruption)',

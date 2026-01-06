@@ -2,52 +2,43 @@
 // Manages undo/redo functionality for edited images
 
 // History state (persisted to localStorage)
-let imageEditHistory = [];       // Store up to 10 images (base64)
+let imageEditHistory = [];       // Store up to 2 images: [original, latest edited]
 let currentHistoryIndex = -1;    // Current position in history
-const MAX_HISTORY = 10;          // Maximum images in history
+const MAX_HISTORY = 2;           // Maximum 2 images only: original + latest edited
 const HISTORY_STORAGE_KEY = 'imageEditHistory';
 const HISTORY_INDEX_KEY = 'imageEditHistoryIndex';
 
-// Save history to localStorage
+// Save history to localStorage (simplified - only 2 images max)
 function saveHistoryToStorage() {
     try {
         localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(imageEditHistory));
         localStorage.setItem(HISTORY_INDEX_KEY, currentHistoryIndex.toString());
     } catch (e) {
-        if (e.name === 'QuotaExceededError') {
-            console.warn('⚠️ localStorage quota exceeded for image history, auto-cleaning...');
-
-            // ✨ v2.8.12: Auto-cleanup - Keep only 3 most recent images instead of 10
-            if (imageEditHistory.length > 3) {
-                const recentImages = imageEditHistory.slice(-3);
-                imageEditHistory = recentImages;
-                currentHistoryIndex = Math.min(currentHistoryIndex, recentImages.length - 1);
-
-                // Retry save with reduced data
-                try {
-                    localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(imageEditHistory));
-                    localStorage.setItem(HISTORY_INDEX_KEY, currentHistoryIndex.toString());
-                    console.log('✅ Saved image history after cleanup (kept 3 images)');
-                } catch (retryError) {
-                    console.warn('⚠️ Still cannot save image history, skipping...');
-                }
-            }
-        } else {
-            console.warn('⚠️ Could not save image history to localStorage:', e);
-        }
+        console.warn('⚠️ Could not save image history to localStorage:', e);
+        // With max 2 images, quota should never be an issue
     }
 }
 
-// Load history from localStorage
+// Load history from localStorage (after F5 - keep only current image)
 function loadHistoryFromStorage() {
     try {
         const savedHistory = localStorage.getItem(HISTORY_STORAGE_KEY);
         const savedIndex = localStorage.getItem(HISTORY_INDEX_KEY);
 
         if (savedHistory) {
-            imageEditHistory = JSON.parse(savedHistory);
-            currentHistoryIndex = savedIndex ? parseInt(savedIndex) : -1;
-            console.log(`📂 Loaded history from storage (${imageEditHistory.length}/${MAX_HISTORY}), index: ${currentHistoryIndex}`);
+            const fullHistory = JSON.parse(savedHistory);
+            const index = savedIndex ? parseInt(savedIndex) : 0;
+
+            // ✨ v2.8.13: After F5 refresh, keep ONLY the current image (1 image)
+            if (fullHistory.length > 0 && index >= 0 && index < fullHistory.length) {
+                imageEditHistory = [fullHistory[index]]; // Keep only current viewing image
+                currentHistoryIndex = 0; // Reset to index 0
+                console.log('📂 Loaded current image only after refresh (1 image preserved)');
+            } else {
+                imageEditHistory = [];
+                currentHistoryIndex = -1;
+                console.log('📂 No valid history found after refresh');
+            }
             return true;
         }
     } catch (e) {
@@ -172,7 +163,7 @@ function initImageEditHistory() {
         navigateImageHistory(1);
     });
 
-    console.log('✅ Image Edit History initialized (max: 10 images, persisted to localStorage)');
+    console.log('✅ Image Edit History initialized (max: 2 images - original + latest edited)');
 }
 
 // Get current state (for checking if history is empty)
