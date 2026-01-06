@@ -356,6 +356,38 @@ Previous Releases:
                                                 กำลังแก้ไขภาพ...</p>
                                         </div>
                                     </div>
+
+                                    <!-- ✨ NEW: Floating Processing Image (v2.8.2) -->
+                                    <div id="floating-processing-container"
+                                         class="hidden absolute pointer-events-none"
+                                         style="z-index: 40;">
+
+                                        <!-- Scaled image with hologram overlay -->
+                                        <div class="relative">
+                                            <img id="floating-processing-image"
+                                                 class="rounded-xl border-2 border-cyan-500/50"
+                                                 src="#"
+                                                 style="object-fit: contain;">
+
+                                            <!-- Hologram overlay on floating image -->
+                                            <div class="absolute inset-0 rounded-xl overflow-hidden">
+                                                <div class="absolute inset-0 hologram-overlay rounded-xl"></div>
+
+                                                <!-- Progress text -->
+                                                <div class="absolute inset-0 flex items-center justify-center">
+                                                    <p id="floating-status-text"
+                                                       class="text-cyan-400 text-sm font-semibold drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]">
+                                                        processing... 0%
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- ✨ NEW: Dim overlay for base image (v2.8.2) -->
+                                    <div id="base-image-dim"
+                                         class="hidden absolute inset-0 bg-black/40 rounded-xl pointer-events-none"
+                                         style="z-index: 25;"></div>
                                 </div>
                             </div>
 
@@ -6472,6 +6504,66 @@ Previous Releases:
         }
         // ========== END: Video Generation Overlay Functions ==========
 
+        // ========== Floating Processing Visual Functions (v2.8.2) ==========
+
+        function showFloatingProcessing(sourceImageSrc, initialProgress = 0) {
+            const floatingContainer = document.getElementById('floating-processing-container');
+            const floatingImage = document.getElementById('floating-processing-image');
+            const floatingText = document.getElementById('floating-status-text');
+            const dimOverlay = document.getElementById('base-image-dim');
+
+            if (!floatingContainer || !floatingImage) return;
+
+            // Set source image
+            floatingImage.src = sourceImageSrc;
+            floatingText.textContent = `processing... ${initialProgress}%`;
+
+            // Show elements
+            floatingContainer.classList.remove('hidden', 'floating-exit');
+            dimOverlay.classList.remove('hidden');
+            dimOverlay.classList.add('active');
+
+            // Trigger animation (next frame to ensure hidden is removed first)
+            requestAnimationFrame(() => {
+                floatingContainer.classList.add('floating-active');
+            });
+
+            console.log('✨ Floating processing visual started');
+        }
+
+        function updateFloatingProgress(progress) {
+            const floatingText = document.getElementById('floating-status-text');
+            if (floatingText) {
+                floatingText.textContent = `processing... ${progress}%`;
+            }
+        }
+
+        function hideFloatingProcessing(callback) {
+            const floatingContainer = document.getElementById('floating-processing-container');
+            const dimOverlay = document.getElementById('base-image-dim');
+
+            if (!floatingContainer) {
+                if (callback) callback();
+                return;
+            }
+
+            // Remove active animation, add exit animation
+            floatingContainer.classList.remove('floating-active');
+            floatingContainer.classList.add('floating-exit');
+            dimOverlay.classList.remove('active');
+
+            // Wait for animation to complete
+            setTimeout(() => {
+                floatingContainer.classList.add('hidden');
+                floatingContainer.classList.remove('floating-exit');
+                dimOverlay.classList.add('hidden');
+
+                if (callback) callback();
+                console.log('✨ Floating processing visual hidden');
+            }, 400); // Match float-away duration
+        }
+        // ========== END: Floating Processing Visual Functions ==========
+
         // Update overlay status text
         function updateImageEditOverlay(statusText) {
             const statusTextEl = document.getElementById('image-edit-status-text');
@@ -6615,8 +6707,9 @@ Previous Releases:
             editBtn.disabled = true;
             editBtn.innerHTML = '<span class="animate-pulse">กำลังส่งคำขอ...</span>';
 
-            // Show hologram overlay on image
-            showImageEditOverlay('📤 กำลังส่งคำขอ...');
+            // ✨ NEW (v2.8.2): Show floating processing visual instead of overlay
+            const sourceImage = window.imageBase64Data || imageBase64Data;
+            showFloatingProcessing(sourceImage, 0);
 
             // Get API key
             const apiKey = getWavespeedApiKey();
@@ -6714,6 +6807,8 @@ Previous Releases:
                 alert('❌ เกิดข้อผิดพลาดในการแก้ไขภาพ\n\n' + error.message);
                 editBtn.disabled = false;
                 editBtn.innerHTML = originalText;
+                // ✨ NEW (v2.8.2): Hide floating visual on error
+                hideFloatingProcessing();
                 hideImageEditOverlay();
             }
         }
@@ -6786,6 +6881,9 @@ Previous Releases:
                     // Update hologram overlay with progress
                     updateImageEditOverlay(`⚙️ ${status || 'กำลังประมวลผล'}... ${Math.round(progress)}%`);
 
+                    // ✨ NEW (v2.8.2): Also update floating visual progress
+                    updateFloatingProgress(Math.round(progress));
+
                     // Check completion (Wan 2.6 status: created -> processing -> completed/failed)
                     if ((status === 'completed' || status === 'succeeded') && outputs.length > 0) {
                         clearInterval(pollInterval);
@@ -6823,28 +6921,32 @@ Previous Releases:
                 imageBase64Data = base64;
                 window.imageBase64Data = base64; // ✨ NEW: Sync to window for history navigation
                 const previewImg = document.getElementById('image-preview-left');
-                if (previewImg) {
-                    // ✨ NEW: Smooth transition when showing result
-                    previewImg.style.transition = 'opacity 300ms ease-in-out';
-                    previewImg.style.opacity = '0';
 
-                    setTimeout(() => {
-                        previewImg.src = base64;
-                        previewImg.style.opacity = '1';
+                // ✨ NEW (v2.8.2): Hide floating visual with callback
+                hideFloatingProcessing(() => {
+                    if (previewImg) {
+                        // ✨ NEW: Smooth transition when showing result
+                        previewImg.style.transition = 'opacity 300ms ease-in-out';
+                        previewImg.style.opacity = '0';
 
-                        // Pulse glow effect to indicate new image
-                        const previewContainer = document.getElementById('image-preview-container-left');
-                        if (previewContainer) {
-                            previewContainer.classList.add('border-pulse-cyan');
-                            setTimeout(() => {
-                                previewContainer.classList.remove('border-pulse-cyan');
-                            }, 1000);
-                        }
-                    }, 300);
+                        setTimeout(() => {
+                            previewImg.src = base64;
+                            previewImg.style.opacity = '1';
 
-                    // ✨ REMOVED: Direct onclick handlers that conflict with wrapper listener
-                    // The previewWrapperLeft listener (line 3782) handles clicks via window.imageBase64Data
-                }
+                            // Pulse glow effect to indicate new image
+                            const previewContainer = document.getElementById('image-preview-container-left');
+                            if (previewContainer) {
+                                previewContainer.classList.add('border-pulse-cyan');
+                                setTimeout(() => {
+                                    previewContainer.classList.remove('border-pulse-cyan');
+                                }, 1000);
+                            }
+                        }, 300);
+
+                        // ✨ REMOVED: Direct onclick handlers that conflict with wrapper listener
+                        // The previewWrapperLeft listener (line 3782) handles clicks via window.imageBase64Data
+                    }
+                });
 
                 // Add to edit history
                 if (typeof window.imageEditHistory !== 'undefined') {
@@ -6921,6 +7023,8 @@ Previous Releases:
             syncBothUIs('updateProgress', { width: '0%' });
             syncBothUIs('updateStatusText', { text: '' });
 
+            // ✨ NEW (v2.8.2): Hide floating visual on error
+            hideFloatingProcessing();
             // Hide hologram overlay
             hideImageEditOverlay();
         }

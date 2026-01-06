@@ -15,10 +15,10 @@ const VIDIST_VERSION = {
     // Semantic Version (Major.Minor.Patch)
     major: 2,
     minor: 8,
-    patch: 1,
+    patch: 2,
 
     // Build number (MMDDYYYY format)
-    build: 'git01052026',
+    build: 'git01062026',
 
     // Computed full version string
     get full() {
@@ -44,6 +44,7 @@ const VIDIST_VERSION = {
 
     // Latest features changelog
     features: [
+        '✨ Floating Processing Visual v2.8.2 (Image edit shows floating scaled image with hologram overlay, dimmed base image, real-time progress updates, smooth float-up-right animation on start, float-away exit animation, 85% scale with shadow and cyan glow, stays within 280px container bounds, callback-based sequential animations, responsive design for mobile, professional depth and visual hierarchy)',
         '🔧 Image Edit Navigation Fix v2.8.1 (Fixed critical bug where Previous/Next + Edit sent wrong image to API, Source validation before API call, Smooth fade transitions for result display with pulse cyan glow, Event-driven sync between modules, Maintains correct image selection across navigation)',
         '📱 Mobile UX Complete v2.8.0 (Two-tap touch interactions for history cards with cyan glow, Custom dialog system replacing browser alerts with cyberpunk theme, Video player tap controls for play/pause, Fixed Step buttons to single row layout, All mobile optimizations unified in one release)',
         '📱 Mobile Language Selector Fix v2.7.9 (Moved fix to 768px media query - previous fix only applied to screens <480px, now works on all mobile devices, reduced button height for compact layout)',
