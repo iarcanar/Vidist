@@ -14,7 +14,27 @@ function saveHistoryToStorage() {
         localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(imageEditHistory));
         localStorage.setItem(HISTORY_INDEX_KEY, currentHistoryIndex.toString());
     } catch (e) {
-        console.warn('⚠️ Could not save image history to localStorage:', e);
+        if (e.name === 'QuotaExceededError') {
+            console.warn('⚠️ localStorage quota exceeded for image history, auto-cleaning...');
+
+            // ✨ v2.8.12: Auto-cleanup - Keep only 3 most recent images instead of 10
+            if (imageEditHistory.length > 3) {
+                const recentImages = imageEditHistory.slice(-3);
+                imageEditHistory = recentImages;
+                currentHistoryIndex = Math.min(currentHistoryIndex, recentImages.length - 1);
+
+                // Retry save with reduced data
+                try {
+                    localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(imageEditHistory));
+                    localStorage.setItem(HISTORY_INDEX_KEY, currentHistoryIndex.toString());
+                    console.log('✅ Saved image history after cleanup (kept 3 images)');
+                } catch (retryError) {
+                    console.warn('⚠️ Still cannot save image history, skipping...');
+                }
+            }
+        } else {
+            console.warn('⚠️ Could not save image history to localStorage:', e);
+        }
     }
 }
 

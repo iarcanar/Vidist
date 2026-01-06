@@ -1833,9 +1833,11 @@ Previous Releases:
                             // ลองทำความสะอาดแบบ aggressive - ลบข้อมูลเก่าออกเพิ่ม
                             console.log('🔄 First cleanup not enough, trying aggressive cleanup...');
 
-                            // ลบ videoHistory ทั้งหมดถ้ายังไม่พอ
+                            // ✨ v2.8.12: Keep 5 most recent items instead of wiping everything
+                            const keepRecent = videoHistoryData.slice(0, 5);
                             localStorage.removeItem('videoHistory');
-                            videoHistoryData = [];
+                            videoHistoryData = keepRecent;
+                            console.log(`📊 Aggressive cleanup: kept ${keepRecent.length} most recent items`);
 
                             // ลบ attached image/video เก่า
                             localStorage.removeItem(ATTACHED_IMAGE_STORAGE_KEY);

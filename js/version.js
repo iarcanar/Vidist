@@ -15,7 +15,7 @@ const VIDIST_VERSION = {
     // Semantic Version (Major.Minor.Patch)
     major: 2,
     minor: 8,
-    patch: 11,
+    patch: 12,
 
     // Build number (MMDDYYYY format)
     build: 'git01062026',
@@ -44,6 +44,7 @@ const VIDIST_VERSION = {
 
     // Latest features changelog
     features: [
+        '🔒 localStorage Quota Data Loss Fix v2.8.12 (CRITICAL FIX: Aggressive cleanup now keeps 5 most recent history items instead of wiping everything - prevents data loss when localStorage is full, Added quota handling to image edit history with auto-reduce to 3 images, History preserved during localStorage pressure)',
         '🚫 Non-Interactive Processing Cards v2.8.11 (Removed delete button from processing cards - cards are now purely status displays, no hover interactions during video/image generation, prevents accidental cancellation, cleaner separation between active processing and completed items)',
         '🗑️ Simplified Delete Dialogs v2.8.10 (Removed redundant double confirmations - single short question "ต้องการลบรายการนี้?" with custom cyberpunk dialog, silent success (no alert after deletion), all messages in Thai, cleaner UX without interruption)',
         '✨ Box-Shadow Containment v2.8.9 (Fixed shadow/glow overflow on mobile - moved box-shadow from container to wrapper div, now contained within overflow:hidden boundary, eliminates edge artifacts around floating image on mobile)',
