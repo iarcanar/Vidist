@@ -8007,23 +8007,12 @@ Previous Releases:
             const itemToDelete = videoHistoryData.find(v => v.id === videoId);
             if (!itemToDelete) {
                 console.error('❌ Item not found in history:', videoId);
-                alert('❌ Error: Item not found in history');
+                await alert('ไม่พบรายการนี้');
                 return;
             }
 
-            // === STEP 2: Confirmation Dialog ===
-            const promptPreview = (itemToDelete.prompt || 'No prompt').substring(0, 100);
-            const confirmMessage = `⚠️ Delete this item permanently?\n\n` +
-                `Prompt: ${promptPreview}...\n` +
-                `Model: ${itemToDelete.model || 'Unknown'}\n` +
-                `Status: ${itemToDelete.status || 'Unknown'}\n\n` +
-                `This will delete the item from:\n` +
-                `✓ Local history\n` +
-                `✓ Wavespeed server (if exists)\n` +
-                `✓ All caches\n\n` +
-                `ต้องการลบใช่หรือไม่? (Cannot be undone)`;
-
-            if (!confirm(confirmMessage)) {
+            // === STEP 2: Confirmation Dialog (v2.8.10: Simplified) ===
+            if (!await confirm('ต้องการลบรายการนี้?')) {
                 console.log('🚫 Deletion cancelled by user');
                 return;
             }
@@ -8076,12 +8065,8 @@ Previous Releases:
                     console.error('❌ API deletion failed:', error);
                     apiDeleteError = error.message;
 
-                    // Ask user if they want to continue with local deletion
-                    const continueLocal = confirm(
-                        `⚠️ Server deletion failed:\n${apiDeleteError}\n\n` +
-                        `Continue with local deletion only?\n` +
-                        `(Item may still exist on Wavespeed server)`
-                    );
+                    // Ask user if they want to continue with local deletion (v2.8.10: Simplified)
+                    const continueLocal = await confirm('ไม่สามารถลบจาก Server ได้\nต้องการลบจาก Local เท่านั้น?');
 
                     if (!continueLocal) {
                         console.log('🚫 User cancelled after API failure');
@@ -8115,7 +8100,7 @@ Previous Releases:
 
             } catch (error) {
                 console.error('❌ Local deletion failed:', error);
-                alert(`❌ Error deleting item locally:\n${error.message}\n\nPlease try again or use "Clear All History"`);
+                await alert(`ลบไม่สำเร็จ: ${error.message}`);
                 return;
             }
 
@@ -8146,18 +8131,15 @@ Previous Releases:
             // === STEP 7: Re-render History ===
             await renderVideoHistory();
 
-            // === STEP 8: Success Feedback ===
-            let successMessage = '✅ Item deleted successfully\n\n';
-            if (apiDeleteSuccess) {
-                successMessage += '✓ Removed from server\n✓ Removed from local history';
-            } else if (!apiKey) {
-                successMessage += '✓ Removed from local history\n⚠️ No API key - server not checked';
-            } else if (apiDeleteError) {
-                successMessage += '✓ Removed from local history\n⚠️ Server deletion failed (see console)';
-            }
-
-            alert(successMessage);
+            // === STEP 8: Success Feedback (v2.8.10: Silent success, no alert) ===
             console.log('🎉 Deletion completed successfully');
+            if (apiDeleteSuccess) {
+                console.log('✅ Removed from server and local history');
+            } else if (!apiKey) {
+                console.log('✅ Removed from local history (no API key)');
+            } else if (apiDeleteError) {
+                console.log('⚠️ Removed from local history (server deletion failed)');
+            }
         }
 
         // Make function globally accessible
