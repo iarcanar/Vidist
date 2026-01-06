@@ -626,6 +626,15 @@ textarea::-webkit-resizer:hover {
     }
 }
 
+/* Floating container base position */
+#floating-processing-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+}
+
 /* Floating container states */
 #floating-processing-container.floating-active {
     animation: float-up-right 500ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
