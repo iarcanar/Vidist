@@ -7851,8 +7851,8 @@ Previous Releases:
 
                 safeSetLocalStorage('videoHistory', JSON.stringify(videoHistoryData));
 
-                // NEW: Prepend video with shimmer effect instead of full reload
-                prependNewVideoToHistory(currentVideoData, 0); // index 0 = newest
+                // ✨ v2.8.14: Always call renderVideoHistory() to ensure UI updates
+                renderVideoHistory();
 
                 console.log(`✅ Added new to history (${videoHistoryData.length}/${STORAGE_LIMITS.VIDEO_HISTORY_MAX})`);
             }
