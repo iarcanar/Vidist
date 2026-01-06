@@ -1,4 +1,4 @@
-# VIDIST - แพลตฟอร์มสร้างวิดีโอด้วย AI (v2.7.9)
+# VIDIST - แพลตฟอร์มสร้างวิดีโอด้วย AI (v2.8.9)
 
 **VIDIST** คือเว็บแอปพลิเคชันสำหรับสร้างวิดีโอด้วย AI ที่เน้นความสวยงามในสไตล์ Cyberpunk และรองรับโมเดลวิดีโอที่ทันสมัยที่สุดในปัจจุบันผ่าน Wavespeed API และ Gemini 2.0 Flash
 
@@ -87,15 +87,27 @@
 - **Frontend**: HTML5, CSS3, Vanilla JavaScript (No framework)
 - **API**: Wavespeed API V3, Gemini 2.0 Flash
 - **Deployment**: GitHub Pages
-- **Current Version**: v2.7.9 (Build git01052026)
+- **Current Version**: v2.8.9 (Build git01062026)
 
-### Latest Updates (v2.7.9)
-- 📱 Mobile Language Selector Fix - Moved to 768px media query for all mobile devices
+### Latest Updates (v2.8.9)
+- ✨ Box-Shadow Containment - Fixed shadow/glow overflow on mobile floating image
+- 📱 Mobile Hologram Fix - Perfect fit with overflow:hidden boundary
+- 🔇 Silent Auto-Cleanup - Removed storage quota alerts, aggressive cleanup
+- 🔧 Display Override Fix - Fixed .hidden class specificity issue
+- ✨ Equal Size Scaling - Both base and floating images same 238px size
+- 🔧 Positioning Fix - Fixed floating container overlay position
+- 🔧 Syntax Fix - Removed duplicate const declaration
+- ✨ Floating Processing Visual - Floating scaled image with hologram during Image Edit
 
-### Recent Updates (v2.7.6 - v2.7.8)
-- 🎬 Video UI Enhancement (v2.7.6) - Hover delete button + drag & drop replace
+### Recent Updates (v2.8.0 - v2.8.1)
+- 🔧 Image Edit Navigation Fix (v2.8.1) - Fixed Previous/Next + Edit bug
+- 📱 Mobile UX Complete (v2.8.0) - Two-tap interactions, custom dialogs, video tap controls
+
+### Previous Updates (v2.7.6 - v2.7.9)
+- 📱 Mobile Language Selector Fix (v2.7.9) - 768px media query for all devices
+- 📱 Mobile Language Selector (v2.7.8) - EN/TH/JA as 3 columns
 - 🔧 Mobile CSS Fix (v2.7.7) - History hide button specificity issue
-- 📱 Mobile Language Selector (v2.7.8) - EN/TH/JA buttons as 3 columns
+- 🎬 Video UI Enhancement (v2.7.6) - Hover delete button + drag & drop replace
 
 ### Version History
 - **v2.7.5**: Enhanced History Search & Kebab Menu
@@ -105,7 +117,7 @@
 - **v2.7.1**: History Prompt Persistence Fix
 - **v2.7.0**: Credit Balance Redesign
 
-**Last Updated**: January 5, 2026
+**Last Updated**: January 6, 2026
 
 ---
 
