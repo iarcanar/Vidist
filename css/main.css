@@ -667,6 +667,14 @@ textarea::-webkit-resizer:hover {
     height: auto;
 }
 
+/* Wrapper div constraints to prevent overflow */
+#floating-processing-container > div.relative {
+    max-width: 238px;
+    max-height: 340px;
+    overflow: hidden;
+    border-radius: 0.75rem; /* match rounded-xl */
+}
+
 /* Scale base image to match floating image size when editing */
 #image-preview-left.editing-scaled {
     max-width: 238px;
@@ -684,6 +692,11 @@ textarea::-webkit-resizer:hover {
     }
 
     #image-preview-left.editing-scaled {
+        max-height: 170px;
+    }
+
+    /* Wrapper div mobile constraints - CRITICAL for preventing overflow */
+    #floating-processing-container > div.relative {
         max-height: 170px;
     }
 
