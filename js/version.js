@@ -15,7 +15,7 @@ const VIDIST_VERSION = {
     // Semantic Version (Major.Minor.Patch)
     major: 2,
     minor: 8,
-    patch: 0,
+    patch: 1,
 
     // Build number (MMDDYYYY format)
     build: 'git01052026',
@@ -44,6 +44,7 @@ const VIDIST_VERSION = {
 
     // Latest features changelog
     features: [
+        '🔧 Image Edit Navigation Fix v2.8.1 (Fixed critical bug where Previous/Next + Edit sent wrong image to API, Source validation before API call, Smooth fade transitions for result display with pulse cyan glow, Event-driven sync between modules, Maintains correct image selection across navigation)',
         '📱 Mobile UX Complete v2.8.0 (Two-tap touch interactions for history cards with cyan glow, Custom dialog system replacing browser alerts with cyberpunk theme, Video player tap controls for play/pause, Fixed Step buttons to single row layout, All mobile optimizations unified in one release)',
         '📱 Mobile Language Selector Fix v2.7.9 (Moved fix to 768px media query - previous fix only applied to screens <480px, now works on all mobile devices, reduced button height for compact layout)',
         '📱 Mobile Language Selector v2.7.8 (Fixed EN/TH/JA language buttons showing as 3 rows on mobile - now displays as single row with 3 equal columns, excluded from grid-cols-3 override)',

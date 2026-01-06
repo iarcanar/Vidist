@@ -74,6 +74,11 @@ function navigateImageHistory(direction) {
     window.imageBase64Data = imageData;
     document.getElementById('image-preview-left').src = imageData;
 
+    // ✨ NEW: Dispatch custom event for index.html to sync local variable
+    window.dispatchEvent(new CustomEvent('imageHistoryNavigated', {
+        detail: { imageData: imageData, index: currentHistoryIndex }
+    }));
+
     updateHistoryUI();
 
     // ✨ NEW: Also update modal image and navigation if modal is open

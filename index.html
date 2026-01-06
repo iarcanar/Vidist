@@ -6579,10 +6579,18 @@ Previous Releases:
             // Get negative prompt (if exists)
             const negativePrompt = document.getElementById('negative-prompt')?.value?.trim() || '';
 
+            // ✨ NEW: Ensure preview shows the EXACT image being sent to API
+            const sourceImage = window.imageBase64Data || imageBase64Data;
+            const previewImg = document.getElementById('image-preview-left');
+            if (previewImg && previewImg.src !== sourceImage) {
+                console.warn('⚠️ Preview mismatch detected - syncing to source');
+                previewImg.src = sourceImage;
+            }
+
             // Prepare API payload (matching official format)
             const payload = {
                 enable_prompt_expansion: enableExpansion,
-                images: [imageBase64Data],  // Base64 data URL
+                images: [window.imageBase64Data || imageBase64Data],  // Use window property (updated by history nav) with fallback
                 prompt: prompt,
                 seed: seed
             };
@@ -6816,7 +6824,24 @@ Previous Releases:
                 window.imageBase64Data = base64; // ✨ NEW: Sync to window for history navigation
                 const previewImg = document.getElementById('image-preview-left');
                 if (previewImg) {
-                    previewImg.src = base64;
+                    // ✨ NEW: Smooth transition when showing result
+                    previewImg.style.transition = 'opacity 300ms ease-in-out';
+                    previewImg.style.opacity = '0';
+
+                    setTimeout(() => {
+                        previewImg.src = base64;
+                        previewImg.style.opacity = '1';
+
+                        // Pulse glow effect to indicate new image
+                        const previewContainer = document.getElementById('image-preview-container-left');
+                        if (previewContainer) {
+                            previewContainer.classList.add('border-pulse-cyan');
+                            setTimeout(() => {
+                                previewContainer.classList.remove('border-pulse-cyan');
+                            }, 1000);
+                        }
+                    }, 300);
+
                     // ✨ REMOVED: Direct onclick handlers that conflict with wrapper listener
                     // The previewWrapperLeft listener (line 3782) handles clicks via window.imageBase64Data
                 }
@@ -6947,6 +6972,12 @@ Previous Releases:
 
             // Edit button listener
             document.getElementById('edit-image-btn')?.addEventListener('click', editImage_Wavespeed);
+
+            // ✨ NEW: Listen for history navigation to sync local variable
+            window.addEventListener('imageHistoryNavigated', (e) => {
+                imageBase64Data = e.detail.imageData;
+                console.log(`📸 Image synced from history: ${e.detail.index + 1}`);
+            });
 
             // Note: Undo/Redo handled by image_edit_history.js navigation buttons
             // History is cleared automatically when new image is uploaded (handled in image_edit_history.js)
