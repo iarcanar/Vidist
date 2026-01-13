@@ -14,11 +14,11 @@
 const VIDIST_VERSION = {
     // Semantic Version (Major.Minor.Patch)
     major: 2,
-    minor: 8,
-    patch: 14,
+    minor: 9,
+    patch: 0,
 
     // Build number (MMDDYYYY format)
-    build: 'git01062026',
+    build: '01132026',
 
     // Computed full version string
     get full() {
@@ -44,6 +44,7 @@ const VIDIST_VERSION = {
 
     // Latest features changelog
     features: [
+        '🎨 Gemini 2.5 Flash Image Edit v2.9.0 (NEW MODEL OPTION: Added Gemini "Nano Banana" alongside WAN 2.6 for image editing - Dropdown model selector with pricing display ($0.039 Gemini vs $0.035 WAN), Gemini as default selection, Synchronous API (5-15s vs 20-40s), Conditional UI (hides negative prompt/expansion for Gemini), Provider-specific routing architecture, Separate billing (Gemini via Google AI, not Wavespeed), Full history integration and auto-save support)',
         '🔧 History Panel Auto-Update Fix v2.8.14 (CRITICAL FIX: Video completion now always updates history panel automatically - added renderVideoHistory() call in fallback case when placeholder not found, ensures UI updates even after aggressive cleanup, no more manual refresh needed)',
         '🎯 Minimal Image History v2.8.13 (MAJOR CHANGE: Reduced image edit history from 10 → 2 images only (original + latest edited), F5 refresh keeps only current viewing image (1 image), Previous/Next buttons still work for 2-image navigation, Eliminates localStorage quota issues completely)',
         '🔒 localStorage Quota Data Loss Fix v2.8.12 (CRITICAL FIX: Aggressive cleanup now keeps 5 most recent history items instead of wiping everything - prevents data loss when localStorage is full, Added quota handling to image edit history with auto-reduce to 3 images, History preserved during localStorage pressure)',

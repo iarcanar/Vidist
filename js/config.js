@@ -93,6 +93,19 @@ const MODEL_CONFIG = {
             'fixed': 0.035  // $0.035 per edit
         }
     },
+    // Gemini 2.5 Flash Image Edit
+    "gemini-25-flash-image": {
+        provider: 'gemini',
+        name: 'Gemini 2.5 Flash',
+        internal_id: 'gemini-2.5-flash-image',
+        outputType: 'image',
+        features: ["image-edit"],
+        supportsNegativePrompt: false,  // Gemini doesn't use negative prompts
+        supportsExpansion: false,       // Different prompting model
+        pricing: {
+            'fixed': 0.039  // $0.039 per edit (~1290 tokens @ $0.30/1M input)
+        }
+    },
     // Kling Video O1 STD Image-to-Video
     "ws-kling-o1-i2v": {
         provider: 'wavespeed',
