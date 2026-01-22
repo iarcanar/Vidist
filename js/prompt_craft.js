@@ -2139,7 +2139,7 @@ Keep her top, facial expression, hairstyle, and sitting position on the stairs e
         const dialogInstruction = level === 'img'
             ? '' // No dialog for Image Edit
             : customDialogOverride
-            ? `4. DIALOG: DO NOT generate dialog. User will provide custom dialog separately.`
+            ? `4. DIALOG: ⚠️ CRITICAL - DO NOT include any SPEECH:, Dialog:, or Dialogs: field in your output. Completely omit all dialog/speech content. User will add speech separately if needed.`
             : `4. DIALOG: Add a specific field at the very end formatted EXACTLY like this:
            SPEECH: "insert text here"
 
@@ -2185,7 +2185,7 @@ ${selectedFluidRules}
         CRITICAL RULES:
         - Output ONLY the final video prompt - absolutely NO explanations or headers.
         - Write as a single flowing paragraph with clear progression.
-        - Use DIRECT and EXPLICIT terms appropriate for Level ${level}.
+        - Use DIRECT and EXPLICIT terms appropriate for Level ${level}.${customDialogOverride ? '\n        - ⚠️ CRITICAL: DO NOT include any SPEECH:, Dialog:, or Dialogs: field in the output. Omit all dialog/speech completely.' : ''}
         - ${selectedOutputInstruction}
 
         INPUT:`;

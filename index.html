@@ -1723,6 +1723,7 @@ Previous Releases:
         let startTime = null;                // → AppState.generation.startTime
         let videoHistoryData = [];           // → AppState.history.videos
         let completedVideosData = [];        // → Only completed videos (for modal index mapping)
+        let renderingId = 0;                 // → Counter for renderVideoHistory() call tracking (race condition prevention)
         let currentVideoData = null;         // → AppState.history.currentData
         let selectedAspectRatio = "16:9";    // → AppState.ui.selectedAspectRatio
         let isPolling = false;               // → AppState.generation.isPolling
@@ -8822,6 +8823,11 @@ Previous Releases:
 
         // ========== START: แก้ไขฟังก์ชันนี้ (เพิ่ม Fallbacks และ Error Handling) ==========
         async function renderVideoHistory() {
+            // ========== ✨ NEW: Increment FIRST to track all calls (Race Condition Fix) ==========
+            const currentRenderingId = ++renderingId;
+            console.log(`🎬 Starting render #${currentRenderingId}`);
+            // ========== END: Rendering ID ==========
+
             // ✨ NEW: Get filtered history based on current filter mode
             const filteredData = getFilteredHistory();
 
@@ -8835,6 +8841,7 @@ Previous Releases:
                     emptyMessage = 'No images in history';
                 }
                 videoHistory.innerHTML = `<p class="text-sm text-gray-500 text-center py-8">${emptyMessage}</p>`;
+                console.log(`✅ Render #${currentRenderingId} completed (empty state)`);
                 return;
             }
 
@@ -8859,6 +8866,14 @@ Previous Releases:
                 new Promise(resolve => setTimeout(resolve, 10000))
             ]);
             console.log('✅ Pre-loading completed');
+
+            // ========== ✨ CHECKPOINT 1 - Cancel if newer render started (Race Condition Fix) ==========
+            if (currentRenderingId !== renderingId) {
+                console.log(`🚫 Render #${currentRenderingId} cancelled after pre-load (current: #${renderingId})`);
+                return; // Exit early, don't update state or DOM
+            }
+            console.log(`✅ Render #${currentRenderingId} still current after pre-load`);
+            // ========== END: CHECKPOINT 1 ==========
 
             // ========== Separate processing and completed videos ==========
             const processingVideos = filteredData.filter(v => {
@@ -8887,6 +8902,14 @@ Previous Releases:
                     }
                 }
             }
+
+            // ========== ✨ CHECKPOINT 2 - Cancel before DOM update (Race Condition Fix) ==========
+            if (currentRenderingId !== renderingId) {
+                console.log(`🚫 Render #${currentRenderingId} cancelled before DOM update (current: #${renderingId})`);
+                return; // Exit early, don't render DOM
+            }
+            console.log(`✅ Render #${currentRenderingId} proceeding to DOM update`);
+            // ========== END: CHECKPOINT 2 ==========
 
             // Get current view mode and set grid class accordingly
             const viewMode = localStorage.getItem('history_view_mode') || 'list';
@@ -9166,6 +9189,10 @@ Previous Releases:
             if (window.matchMedia('(max-width: 768px)').matches) {
                 initHistoryTouchHandlers();
             }
+
+            // ========== ✨ LOG: Render completion (Race Condition Fix) ==========
+            console.log(`✅ Render #${currentRenderingId} completed successfully`);
+            // ========== END: Render Completion ==========
         }
 
         // --- Load Video with Authentication ---
