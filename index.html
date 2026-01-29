@@ -673,6 +673,20 @@ Previous Releases:
                                     </div>
                                 </div>
 
+                                <!-- MUTE Checkbox (Red Mode Only) -->
+                                <div id="mute-audio-container" class="hidden mb-3">
+                                    <label class="flex items-center gap-2 cursor-pointer group">
+                                        <input type="checkbox" id="mute-audio-checkbox"
+                                            class="w-4 h-4 rounded border-red-500/30 bg-red-500/5 text-red-500 focus:ring-2 focus:ring-red-500/50 transition-all">
+                                        <span
+                                            class="text-xs font-extralight text-red-300/70 tracking-widest group-hover:text-red-300/90 transition-colors">🔇
+                                            MUTE</span>
+                                        <span class="text-[10px] text-gray-500 ml-auto">
+                                            (ปิดเสียงและคำพูดทั้งหมด)
+                                        </span>
+                                    </label>
+                                </div>
+
                                 <!-- Custom Speech Override (Red Mode Only) -->
                                 <div id="custom-dialog-container" class="hidden mb-3">
                                     <label class="flex items-center gap-2 cursor-pointer group mb-2">
@@ -2219,6 +2233,7 @@ Previous Releases:
                     promptLanguage: null,
                     customDialogEnabled: false,
                     customDialogText: null,
+                    muteAudioEnabled: false,
                     craftedAt: null
                 };
             }
@@ -2235,6 +2250,9 @@ Previous Releases:
             const customDialogEnabled = customDialogCheckbox?.checked || false;
             const customDialogText = customDialogEnabled ? (customDialogInput?.value || '') : null;
 
+            const muteAudioCheckbox = document.getElementById('mute-audio-checkbox');
+            const muteAudioEnabled = muteAudioCheckbox?.checked || false;
+
             return {
                 isManualPrompt: false,
                 craftInput: craftInput,
@@ -2243,6 +2261,7 @@ Previous Releases:
                 promptLanguage: promptLanguage,
                 customDialogEnabled: customDialogEnabled,
                 customDialogText: customDialogText,
+                muteAudioEnabled: muteAudioEnabled,
                 craftedAt: new Date().toISOString()
             };
         }
@@ -9439,6 +9458,16 @@ Previous Releases:
                 console.log('  ✓ Custom dialog restored');
             }
 
+            // 6. MUTE Audio State
+            if (craftData.muteAudioEnabled) {
+                const muteCheckbox = document.getElementById('mute-audio-checkbox');
+                if (muteCheckbox) {
+                    muteCheckbox.checked = true;
+                    muteCheckbox.dispatchEvent(new Event('change'));
+                    console.log('  ✓ MUTE audio restored: enabled');
+                }
+            }
+
             // 6. ตั้งค่า promptWasCrafted = true เพื่อให้รู้ว่ามาจาก craft
             promptWasCrafted = true;
             lastCraftedPrompt = document.getElementById('prompt')?.value || '';
@@ -10124,6 +10153,20 @@ Previous Releases:
                     }
                 }
 
+                // ========== NEW: Show/Hide MUTE Audio Container ==========
+                const muteAudioContainer = document.getElementById('mute-audio-container');
+                if (muteAudioContainer) {
+                    if (enabled) {
+                        // Red Mode ON → Show MUTE audio checkbox
+                        muteAudioContainer.classList.remove('hidden');
+                        console.log('🔇 MUTE Audio container shown');
+                    } else {
+                        // Creative Mode ON → Hide MUTE audio checkbox
+                        muteAudioContainer.classList.add('hidden');
+                        console.log('🔇 MUTE Audio container hidden');
+                    }
+                }
+
                 // ========== UPDATE: Show/Hide Step Complexity Selector ==========
                 updateStepComplexityVisibility();
             });
@@ -10142,6 +10185,13 @@ Previous Releases:
             if (customDialogContainer && isRedModeEnabled) {
                 customDialogContainer.classList.remove('hidden');
                 console.log('◎ Custom Dialog Override shown (Red Mode active on load)');
+            }
+
+            // ========== NEW: Load initial Red Mode state and show/hide MUTE audio container ==========
+            const muteAudioContainer = document.getElementById('mute-audio-container');
+            if (muteAudioContainer && isRedModeEnabled) {
+                muteAudioContainer.classList.remove('hidden');
+                console.log('🔇 MUTE Audio container shown (Red Mode active on load)');
             }
 
             // ========== NEW: Custom Dialog Checkbox Toggle ==========
@@ -10206,6 +10256,72 @@ Previous Releases:
 
             // Load state on page load
             loadDialogOverrideState();
+
+            // ========== MUTE Audio Feature ==========
+            const MUTE_CHECKBOX_KEY = 'vidist_mute_audio_enabled';
+
+            // 1. Load saved MUTE state
+            function loadMuteAudioState() {
+                const muteAudioCheckbox = document.getElementById('mute-audio-checkbox');
+                const savedMuteState = localStorage.getItem(MUTE_CHECKBOX_KEY);
+                if (savedMuteState === 'true' && muteAudioCheckbox) {
+                    muteAudioCheckbox.checked = true;
+                    // Auto-disable SPEECH checkbox
+                    disableSpeechCheckbox();
+                    console.log('🔇 Restored MUTE state: enabled');
+                }
+            }
+
+            // 2. Disable SPEECH checkbox when MUTE is ON
+            function disableSpeechCheckbox() {
+                const customDialogCheckbox = document.getElementById('custom-dialog-checkbox');
+                const customDialogInputContainer = document.getElementById('custom-dialog-input-container');
+                if (customDialogCheckbox) {
+                    customDialogCheckbox.disabled = true;
+                    customDialogCheckbox.checked = false; // Uncheck it
+                    customDialogCheckbox.classList.add('opacity-50', 'cursor-not-allowed');
+                    // Save unchecked state
+                    localStorage.setItem('vidist_dialog_override_enabled', 'false');
+                    // Hide the input field too
+                    if (customDialogInputContainer) {
+                        customDialogInputContainer.classList.add('hidden');
+                    }
+                    console.log('🔇 SPEECH disabled due to MUTE');
+                }
+            }
+
+            // 3. Enable SPEECH checkbox when MUTE is OFF
+            function enableSpeechCheckbox() {
+                const customDialogCheckbox = document.getElementById('custom-dialog-checkbox');
+                if (customDialogCheckbox) {
+                    customDialogCheckbox.disabled = false;
+                    customDialogCheckbox.classList.remove('opacity-50', 'cursor-not-allowed');
+                    console.log('🔊 SPEECH enabled (MUTE off)');
+                }
+            }
+
+            // 4. MUTE checkbox change event
+            const muteAudioCheckbox = document.getElementById('mute-audio-checkbox');
+            if (muteAudioCheckbox) {
+                muteAudioCheckbox.addEventListener('change', function() {
+                    const isMuted = this.checked;
+
+                    // Save state
+                    localStorage.setItem(MUTE_CHECKBOX_KEY, isMuted);
+
+                    // Disable/Enable SPEECH checkbox
+                    if (isMuted) {
+                        disableSpeechCheckbox();
+                        console.log('🔇 MUTE enabled - All audio removed from prompts');
+                    } else {
+                        enableSpeechCheckbox();
+                        console.log('🔊 MUTE disabled - Audio can be generated');
+                    }
+                });
+            }
+
+            // 5. Load state on page load
+            loadMuteAudioState();
 
             // ========== Language Selector Event Listeners ==========
             const languageRadios = document.querySelectorAll('input[name="prompt-language"]');

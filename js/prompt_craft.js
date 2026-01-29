@@ -2192,8 +2192,71 @@ ${selectedFluidRules}
         }
     }
 
+    // ========== NEW: Silent Mode System Prompt (MUTE Feature) ==========
+    // Returns a system prompt that generates VISUAL-ONLY prompts with NO audio/speech
+    getSilentModePrompt(language = 'en') {
+        const baseLang = language || 'en';
+
+        const prompts = {
+            en: `You are a professional video prompt engineer. Create a COMPLETELY SILENT scene description.
+
+CRITICAL RULES:
+1. Output ONLY the final video prompt - NO explanations
+2. VISUAL DESCRIPTIONS ONLY - absolutely NO audio content
+3. DO NOT include: SOUND:, SPEECH:, Dialog:, Dialogs:, moans, breathing, vocal sounds, etc.
+4. Focus on: body language, facial expressions, movements, camera angles, lighting
+
+STRUCTURE:
+1. ENVIRONMENT & SUBJECT: Location, lighting, subject appearance
+2. ACTIONS & MOVEMENTS: What the subject is doing (silent actions only)
+3. CAMERA & VISUAL: Shot type, camera movements, visual atmosphere
+4. EMOTIONS: Show through facial expressions and body language ONLY (no sounds)
+
+EXAMPLE GOOD PROMPT:
+"Studio set, neutral lighting, a Thai model in a dress, camera slowly pans around her as she poses gracefully, her expression shifts from shy smile to confident gaze, close-up telephoto shot captures subtle facial nuances, natural body movements flow smoothly, soft ambient lighting highlights her features."
+
+FORBIDDEN:
+❌ "soft moans", "whispers", "breathing", "panting", "gasps"
+❌ SOUND:, SPEECH:, Dialog:, audio descriptions of any kind
+
+Your response must be ONLY the visual prompt - start directly with the scene description.`,
+
+            th: `คุณเป็นวิศวกรพรอมพ์วิดีโออาชีพ สร้างคำอธิบายฉากที่เงียบสนิท
+
+กฎสำคัญ:
+1. เขียนเฉพาะพรอมพ์ขั้นสุดท้าย - ห้ามมีคำอธิบายเพิ่มเติม
+2. อธิบายภาพเท่านั้น - ห้ามมีเสียงใดๆ
+3. ห้ามใส่: SOUND:, SPEECH:, Dialog:, เสียงครวญคราง, เสียงหายใจ ฯลฯ
+4. เน้น: ภาษากาย สีหน้า การเคลื่อนไหว มุมกล้อง แสงสว่าง
+
+ตัวอย่างที่ดี:
+"สตูดิโอ แสงเป็นกลาง นางแบบไทยในชุดเดรส กล้องแพนรอบตัวช้าๆ ขณะที่เธอโพสท่าอย่างสง่างาม สีหน้าเปลี่ยนจากยิ้มเขินอายเป็นสายตามั่นใจ ช็อตระยะใกล้จับความละเอียดบนใบหน้า การเคลื่อนไหวของร่างกายไหลลื่นตามธรรมชาติ"
+
+ห้ามใช้:
+❌ "เสียงครวญเบาๆ", "กระซิบ", "หายใจ", "เสียงหอบ"
+❌ SOUND:, SPEECH:, Dialog:, คำอธิบายเสียงทุกชนิด`,
+
+            ja: `あなたはプロのビデオプロンプトエンジニアです。完全に無音のシーン説明を作成してください。
+
+重要なルール:
+1. 最終的なビデオプロンプトのみを出力 - 説明は不要
+2. 視覚的な説明のみ - 音声コンテンツは一切含めない
+3. 含めないもの: SOUND:、SPEECH:、Dialog:、うめき声、呼吸音、声など
+4. 焦点: ボディランゲージ、表情、動き、カメラアングル、照明
+
+良い例:
+"スタジオセット、ニュートラルな照明、ドレスを着た日本人モデル、カメラがゆっくりと彼女の周りをパンし、彼女は優雅にポーズをとる、表情は恥ずかしそうな笑顔から自信に満ちた視線に変わる、クローズアップのテレフォトショットが繊細な表情のニュアンスを捉える"
+
+禁止事項:
+❌ "柔らかいうめき声"、"ささやき"、"呼吸"、"あえぎ"
+❌ SOUND:、SPEECH:、Dialog:、あらゆる種類の音声説明`
+        };
+
+        return prompts[baseLang] || prompts['en'];
+    }
+
     // Generate prompt using Gemini 2.0 Flash
-    async generatePrompt(userDescription, imageBase64, redModeEnabled = false, intensityLevel = 3, customDialogOverride = false, language = 'en') {
+    async generatePrompt(userDescription, imageBase64, redModeEnabled = false, intensityLevel = 3, customDialogOverride = false, language = 'en', isMuted = false) {
         if (!this.apiKey) {
             throw new Error('Gemini API key not configured');
         }
@@ -2221,9 +2284,13 @@ ${selectedFluidRules}
             }
         };
 
-        // Select system prompt based on mode, intensity level, and language
+        // Select system prompt based on MUTE, mode, intensity level, and language
         let systemPrompt;
-        if (redModeEnabled) {
+        if (isMuted) {
+            // MUTE MODE: Silent prompts only (no audio/speech)
+            systemPrompt = this.getSilentModePrompt(selectedLanguage);
+            console.log(`🔇 MUTE Mode ${selectedLanguage.toUpperCase()} - Silent prompts`);
+        } else if (redModeEnabled) {
             // Red Mode: Use intensity-based prompt with language support
             systemPrompt = this.getRedModePrompt(intensityLevel, customDialogOverride, selectedLanguage);
             console.log(`🎚️ Red Mode ${selectedLanguage.toUpperCase()} - Level ${intensityLevel}${customDialogOverride ? ' (Custom Dialog)' : ''}`);
@@ -2375,7 +2442,21 @@ ${selectedFluidRules}
                 }
             }
 
-            return generatedText.trim();
+            // ========== MUTE Mode Post-Processing ==========
+            let finalPrompt = generatedText.trim();
+            if (isMuted && finalPrompt) {
+                // Remove ALL audio-related fields
+                finalPrompt = finalPrompt
+                    .replace(/SOUND:\s*.+$/gm, '') // Remove SOUND: lines
+                    .replace(/SPEECH:\s*".+?"/gm, '') // Remove SPEECH: "..."
+                    .replace(/Dialogs?:\s*.+$/gm, '') // Remove Dialog/Dialogs: lines
+                    .replace(/\n\s*\n/g, '\n') // Clean up empty lines
+                    .trim();
+
+                console.log('🔇 MUTE: Removed all SOUND/SPEECH fields from generated prompt');
+            }
+
+            return finalPrompt;
         } catch (error) {
             console.error('❌ Gemini API Error:', error);
             throw error;
@@ -2815,6 +2896,10 @@ class PromptCraftController {
             const customDialogOverride = customDialogCheckbox?.checked || false;
             const customDialogText = customDialogOverride && customDialogInput ? customDialogInput.value.trim() : '';
 
+            // ========== NEW: Read MUTE Audio State ==========
+            const muteAudioCheckbox = document.getElementById('mute-audio-checkbox');
+            const isMuted = muteAudioCheckbox?.checked || false;
+
             // Get Red Mode state
             const redModeEnabled = this.state.isRedModeEnabled();
             const modeLabel = redModeEnabled ? `🔴 RED MODE (NSFW) - Level ${intensityLevel}` : '🎨 CREATIVE MODE (Safe)';
@@ -2827,9 +2912,9 @@ class PromptCraftController {
             const currentModelKey = modelSelect ? modelSelect.value : null;
 
             // Call Gemini API for both prompt and negative prompt (in parallel)
-            console.log(`🚀 Generating with ${modeLabel} using Gemini 2.0 Flash (${selectedLanguage.toUpperCase()})...`);
+            console.log(`🚀 Generating with ${modeLabel} using Gemini 2.0 Flash (${selectedLanguage.toUpperCase()})${isMuted ? ' 🔇 MUTE' : ''}...`);
             const [promptResult, negativeResult] = await Promise.allSettled([
-                this.client.generatePrompt(userInput, base64Image, redModeEnabled, intensityLevel, customDialogOverride, selectedLanguage),  // ========== NEW: Pass language ==========
+                this.client.generatePrompt(userInput, base64Image, redModeEnabled, intensityLevel, customDialogOverride, selectedLanguage, isMuted),  // ========== NEW: Pass isMuted ==========
                 this.client.generateNegativePrompt(userInput, base64Image, redModeEnabled, intensityLevel, selectedLanguage, currentModelKey)  // ========== NEW: Pass modelKey ==========
             ]);
 
