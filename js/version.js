@@ -15,7 +15,7 @@ const VIDIST_VERSION = {
     // Semantic Version (Major.Minor.Patch)
     major: 2,
     minor: 11,
-    patch: 0,
+    patch: 1,
 
     // Build number (MMDDYYYY format)
     build: '01292026',
@@ -44,6 +44,7 @@ const VIDIST_VERSION = {
 
     // Latest features changelog
     features: [
+        '🚨 MUTE Feature Critical Fix v2.11.1 (CRITICAL BUGFIX: MUTE was using separate visual-only system prompts instead of Red Mode principles - Deleted getSilentModePrompt() method entirely, Fixed system prompt selection to always use Red Mode/Creative Mode prompts, MUTE now preserves ALL Red Mode sophistication (intensity levels, 6/9/12 step progression, fluid stages, anatomical details), Only removes SOUND:/SPEECH: fields via post-processing, Prompts now maintain same structure/content with just audio fields removed)',
         '🔇 MUTE Feature v2.11.0 - Silent Visual-Only Prompts (NEW FEATURE: MUTE checkbox in Prompt Craft (Red Mode only) completely removes all audio/speech from generated prompts - Auto-disables SPEECH checkbox when enabled, Silent mode system prompts focus purely on visual elements (body language, facial expressions, movements, camera angles, lighting), Post-processing removes SOUND:/SPEECH:/Dialog: fields from AI output, Multi-language support (TH/EN/JA), localStorage persistence + history restoration, Results in completely silent, visual-only video prompts)',
         '🔄 Race Condition & Dialog Override Fix v2.10.0 (CRITICAL FIXES: 1) History Panel Race Condition - Added rendering ID counter with 2 checkpoints to prevent concurrent render overwrites, clicking new video thumbnail now opens correct video instead of previous one, no more manual refresh needed; 2) Prompt Craft Dialog Override - Fixed SPEECH field appearing when checkbox checked but empty, clarified dialogInstruction and added CRITICAL RULES emphasis, allows Wan model to generate natural audio without explicit speech)',
         '🎨 Gemini 2.5 Flash Image Edit v2.9.0 (NEW MODEL OPTION: Added Gemini "Nano Banana" alongside WAN 2.6 for image editing - Dropdown model selector with pricing display ($0.039 Gemini vs $0.035 WAN), Gemini as default selection, Synchronous API (5-15s vs 20-40s), Conditional UI (hides negative prompt/expansion for Gemini), Provider-specific routing architecture, Separate billing (Gemini via Google AI, not Wavespeed), Full history integration and auto-save support)',
