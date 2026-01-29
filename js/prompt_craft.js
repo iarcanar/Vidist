@@ -55,7 +55,7 @@
 
 // ========== Configuration ==========
 const PROMPT_CRAFT_CONFIG = {
-    GEMINI_API_ENDPOINT: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent',
+    GEMINI_API_ENDPOINT: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent',
     GEMINI_API_KEY_STORAGE: 'gemini_api_key',
     UNDO_STACK_KEY: 'vidist_prompt_undo_stack',
     PROMPT_STORAGE_KEY: 'vidist_last_prompt',
