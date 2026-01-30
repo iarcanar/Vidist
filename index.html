@@ -1900,12 +1900,18 @@ Previous Releases:
                 if (usagePercent > 80) {
                     console.warn('⚠️ Storage over 80% full - performing proactive cleanup');
 
-                    // Keep only 15 most recent history items
+                    // 🛡️ v2.12.17: Protect Grok videos during proactive cleanup
                     if (videoHistoryData && videoHistoryData.length > 15) {
-                        const reducedHistory = videoHistoryData.slice(0, 15);
+                        const grokVideos = videoHistoryData.filter(h => h.provider === 'grok' && h.status === 'completed');
+                        const otherVideos = videoHistoryData.filter(h => h.provider !== 'grok');
+                        const reducedHistory = [...grokVideos, ...otherVideos.slice(0, 15)];
                         videoHistoryData = reducedHistory;
-                        localStorage.setItem('videoHistory', JSON.stringify(reducedHistory));
-                        console.log(`🧹 Reduced history from ${videoHistoryData.length} to ${reducedHistory.length} items`);
+                        try {
+                            localStorage.setItem('videoHistory', JSON.stringify(reducedHistory));
+                            console.log(`🛡️ Protected ${grokVideos.length} Grok videos, reduced others to 15 items`);
+                        } catch (e) {
+                            console.warn('⚠️ Proactive cleanup save failed (quota still exceeded)');
+                        }
                     }
 
                     // Also run smart cleanup

@@ -15,7 +15,7 @@ const VIDIST_VERSION = {
     // Semantic Version (Major.Minor.Patch)
     major: 2,
     minor: 12,
-    patch: 16,
+    patch: 17,
 
     // Build number (MMDDYYYY format)
     build: '01302026',
