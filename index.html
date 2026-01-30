@@ -7728,7 +7728,7 @@ Previous Releases:
                     provider: 'gemini',
                     outputType: 'image',
                     status: 'completed',
-                    initialImage: imageBase64Data,
+                    initialImage: fullBase64,  // ✅ FIX v2.12.18: Use edited image, not original
                     createdAt: new Date().toISOString()
                 };
 
