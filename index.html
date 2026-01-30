@@ -207,6 +207,52 @@ Previous Releases:
                             </p>
                         </div>
 
+                        <!-- Grok API Key (x.ai) -->
+                        <div>
+                            <div class="flex items-center justify-between mb-2">
+                                <label class="block text-sm font-semibold text-gray-400 uppercase tracking-wide">Grok API Key (x.ai)</label>
+                            </div>
+                            <div class="flex gap-2">
+                                <input type="password" id="api-key-grok" placeholder="Enter your Grok API Key (xai-...)"
+                                    class="flex-1 px-4 py-3 rounded-xl focus:ring-2 focus:ring-green-500/50 font-mono text-sm"
+                                    value="">
+                                <button id="save-grok-key"
+                                    class="px-4 py-3 rounded-xl bg-green-600 hover:bg-green-700 text-white font-semibold text-sm transition-all flex items-center gap-2 whitespace-nowrap">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                    </svg>
+                                    <span>Save</span>
+                                </button>
+                            </div>
+                            <p class="mt-1 text-xs text-gray-500">Used for Grok Imagine Video & Image. Get your key at
+                                <a href="https://console.x.ai/" target="_blank"
+                                    class="text-green-400 hover:text-green-300 underline">xAI Console</a>
+                            </p>
+                        </div>
+
+                        <!-- imgbb API Key (for Grok video generation) -->
+                        <div>
+                            <div class="flex items-center justify-between mb-2">
+                                <label class="block text-sm font-semibold text-gray-400 uppercase tracking-wide">imgbb API Key</label>
+                            </div>
+                            <div class="flex gap-2">
+                                <input type="password" id="api-key-imgbb" placeholder="Enter your imgbb API Key"
+                                    class="flex-1 px-4 py-3 rounded-xl focus:ring-2 focus:ring-blue-500/50 font-mono text-sm"
+                                    value="">
+                                <button id="save-imgbb-key"
+                                    class="px-4 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm transition-all flex items-center gap-2 whitespace-nowrap">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                    </svg>
+                                    <span>Save</span>
+                                </button>
+                            </div>
+                            <p class="mt-1 text-xs text-gray-500">Required for Grok video generation (image hosting). Get your key at
+                                <a href="https://api.imgbb.com/" target="_blank"
+                                    class="text-blue-400 hover:text-blue-300 underline">imgbb API</a>
+                            </p>
+                        </div>
+
                         <div class="mt-3 p-3 rounded-lg bg-gray-800/50 border border-gray-700">
                             <p class="text-xs text-gray-400 flex items-start gap-2">
                                 <svg class="w-4 h-4 text-cyan-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1905,11 +1951,13 @@ Previous Releases:
                             // ลองทำความสะอาดแบบ aggressive - ลบข้อมูลเก่าออกเพิ่ม
                             console.log('🔄 First cleanup not enough, trying aggressive cleanup...');
 
-                            // ✨ v2.8.12: Keep 5 most recent items instead of wiping everything
-                            const keepRecent = videoHistoryData.slice(0, 5);
+                            // 🛡️ v2.12.14: NEVER delete Grok videos
+                            const grokVideos = videoHistoryData.filter(h => h.provider === 'grok' && h.status === 'completed');
+                            const otherVideos = videoHistoryData.filter(h => h.provider !== 'grok');
+                            const keepRecent = [...grokVideos, ...otherVideos.slice(0, 5)];
                             localStorage.removeItem('videoHistory');
                             videoHistoryData = keepRecent;
-                            console.log(`📊 Aggressive cleanup: kept ${keepRecent.length} most recent items`);
+                            console.log(`📊 Aggressive cleanup: protected ${grokVideos.length} Grok videos, kept ${otherVideos.slice(0, 5).length} others`);
 
                             // ลบ attached image/video เก่า
                             localStorage.removeItem(ATTACHED_IMAGE_STORAGE_KEY);
@@ -2577,10 +2625,290 @@ Previous Releases:
         }
         // ========== END: IndexedDB Persistent Cache ==========
 
+        // ========== GROK PERSISTENCE SYSTEM v2.12.14 ==========
+        const GROK_DB_NAME = 'VIDISTGrokPersistence';
+        const GROK_STORE_NAME = 'grok-videos';
+        const GROK_METADATA_STORE = 'grok-metadata';
+        let grokDB = null;
+
+        async function initGrokDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(GROK_DB_NAME, 1);
+
+                request.onerror = () => reject(request.error);
+
+                request.onsuccess = () => {
+                    grokDB = request.result;
+                    console.log('✅ Grok IndexedDB initialized');
+                    resolve(grokDB);
+                };
+
+                request.onupgradeneeded = (event) => {
+                    const db = event.target.result;
+
+                    // Store 1: Completed videos
+                    if (!db.objectStoreNames.contains(GROK_STORE_NAME)) {
+                        const videoStore = db.createObjectStore(GROK_STORE_NAME, { keyPath: 'id' });
+                        videoStore.createIndex('createdAt', 'createdAt', { unique: false });
+                        videoStore.createIndex('status', 'status', { unique: false });
+                    }
+
+                    // Store 2: Metadata for recovery
+                    if (!db.objectStoreNames.contains(GROK_METADATA_STORE)) {
+                        const metaStore = db.createObjectStore(GROK_METADATA_STORE, { keyPath: 'requestId' });
+                        metaStore.createIndex('createdAt', 'createdAt', { unique: false });
+                    }
+                };
+            });
+        }
+
+        async function saveGrokVideoToIDB(videoData) {
+            if (!grokDB) await initGrokDB();
+
+            return new Promise((resolve) => {
+                try {
+                    const transaction = grokDB.transaction([GROK_STORE_NAME], 'readwrite');
+                    const store = transaction.objectStore(GROK_STORE_NAME);
+
+                    const grokVideo = {
+                        id: videoData.id,
+                        url: videoData.url,
+                        prompt: videoData.prompt,
+                        duration: videoData.duration,
+                        resolution: videoData.resolution,
+                        model: videoData.model,
+                        createdAt: videoData.createdAt || new Date().toISOString(),
+                        status: 'completed',
+                        protected: true
+                    };
+
+                    const request = store.put(grokVideo);
+
+                    request.onsuccess = () => {
+                        console.log('💾 Saved to Grok IDB:', videoData.id);
+                        resolve(true);
+                    };
+
+                    request.onerror = () => {
+                        console.error('❌ Grok IDB save failed:', request.error);
+                        resolve(false);
+                    };
+                } catch (error) {
+                    console.error('❌ Grok IDB error:', error);
+                    resolve(false);
+                }
+            });
+        }
+
+        async function getAllGrokVideos() {
+            if (!grokDB) await initGrokDB();
+
+            return new Promise((resolve) => {
+                try {
+                    const transaction = grokDB.transaction([GROK_STORE_NAME], 'readonly');
+                    const store = transaction.objectStore(GROK_STORE_NAME);
+                    const request = store.getAll();
+
+                    request.onsuccess = () => resolve(request.result || []);
+                    request.onerror = () => {
+                        console.error('❌ Get all Grok videos failed:', request.error);
+                        resolve([]);
+                    };
+                } catch (error) {
+                    console.error('❌ Get all Grok error:', error);
+                    resolve([]);
+                }
+            });
+        }
+
+        async function saveGrokMetadata(requestId, metadata) {
+            if (!grokDB) await initGrokDB();
+
+            return new Promise((resolve) => {
+                try {
+                    const transaction = grokDB.transaction([GROK_METADATA_STORE], 'readwrite');
+                    const store = transaction.objectStore(GROK_METADATA_STORE);
+
+                    const meta = {
+                        requestId,
+                        ...metadata,
+                        savedAt: new Date().toISOString()
+                    };
+
+                    const request = store.put(meta);
+
+                    request.onsuccess = () => {
+                        console.log('📝 Metadata saved:', requestId);
+                        resolve(true);
+                    };
+
+                    request.onerror = () => {
+                        console.error('❌ Metadata save failed:', request.error);
+                        resolve(false);
+                    };
+                } catch (error) {
+                    console.error('❌ Metadata error:', error);
+                    resolve(false);
+                }
+            });
+        }
+
+        async function saveGrokVideoAtomic(videoData) {
+            const results = {
+                indexedDB: false,
+                metadata: false,
+                localStorage: false
+            };
+
+            try {
+                // 1. Save to IndexedDB first (largest capacity)
+                results.indexedDB = await saveGrokVideoToIDB(videoData);
+
+                // 2. Save metadata separately
+                results.metadata = await saveGrokMetadata(videoData.id, {
+                    requestId: videoData.id,
+                    prompt: videoData.prompt,
+                    videoUrl: videoData.url,
+                    config: {
+                        duration: videoData.duration,
+                        resolution: videoData.resolution
+                    },
+                    createdAt: videoData.createdAt || new Date().toISOString()
+                });
+
+                // 3. Update in-memory videoHistoryData
+                const existingIndex = videoHistoryData.findIndex(
+                    v => v.id === videoData.id && v.provider === videoData.provider
+                );
+
+                if (existingIndex !== -1) {
+                    videoHistoryData[existingIndex] = {
+                        ...videoHistoryData[existingIndex],
+                        ...videoData,
+                        status: 'completed'
+                    };
+                    console.log('✨ Updated placeholder with completed video:', videoData.id);
+                } else {
+                    // Fallback: Add new entry
+                    videoHistoryData.unshift(videoData);
+                    videoHistoryData = videoHistoryData.slice(0, 50);
+                    console.log('➕ Added new Grok video to history:', videoData.id);
+                }
+
+                // 4. Save to localStorage (best effort)
+                try {
+                    results.localStorage = safeSetLocalStorage('videoHistory', JSON.stringify(videoHistoryData));
+                } catch (e) {
+                    console.warn('⚠️ localStorage save failed, but IDB succeeded');
+                }
+
+                // 5. Validate at least 2 layers succeeded
+                const successCount = Object.values(results).filter(Boolean).length;
+                if (successCount < 2) {
+                    throw new Error(`Save failed: Only ${successCount}/3 layers succeeded`);
+                }
+
+                // 6. Re-render history
+                renderVideoHistory();
+
+                // 7. Log success
+                console.log('💾 GROK SAVE SUCCESS:', {
+                    id: videoData.id,
+                    layers: results,
+                    timestamp: new Date().toISOString()
+                });
+
+                return true;
+            } catch (error) {
+                // CRITICAL: Log failure with full data for manual recovery
+                console.error('🚨 GROK SAVE FAILED:', {
+                    error: error.message,
+                    results,
+                    videoData: {
+                        id: videoData.id,
+                        url: videoData.url,
+                        prompt: videoData.prompt.substring(0, 100)
+                    },
+                    timestamp: new Date().toISOString()
+                });
+
+                // Store in emergency log
+                const failures = JSON.parse(localStorage.getItem('vidist_grok_failures') || '[]');
+                failures.push({
+                    timestamp: new Date().toISOString(),
+                    videoData,
+                    error: error.message,
+                    results
+                });
+                localStorage.setItem('vidist_grok_failures', JSON.stringify(failures.slice(-20)));
+
+                return false;
+            }
+        }
+
+        async function recoverGrokVideos() {
+            console.log('🔄 Starting Grok video recovery...');
+
+            const recovered = [];
+
+            // 1. Load from IndexedDB
+            const idbVideos = await getAllGrokVideos();
+            recovered.push(...idbVideos.map(v => ({ ...v, provider: 'grok', recoveredFrom: 'IndexedDB' })));
+            console.log(`📦 Recovered ${idbVideos.length} videos from IndexedDB`);
+
+            // 2. Merge with existing localStorage (deduplicate)
+            const localVideos = videoHistoryData.filter(v => v.provider === 'grok');
+            for (const local of localVideos) {
+                if (!recovered.find(v => v.id === local.id)) {
+                    recovered.push({ ...local, recoveredFrom: 'localStorage' });
+                }
+            }
+
+            console.log(`✅ Recovery complete: ${recovered.length} total Grok videos`);
+            return recovered;
+        }
+
+        async function migrateExistingGrokVideos() {
+            if (localStorage.getItem('grok_migration_v12.14_done')) return;
+
+            const existing = videoHistoryData.filter(v => v.provider === 'grok' && v.status === 'completed');
+            if (existing.length === 0) {
+                localStorage.setItem('grok_migration_v12.14_done', 'true');
+                return;
+            }
+
+            console.log(`🔄 Migrating ${existing.length} existing Grok videos to IndexedDB...`);
+
+            for (const video of existing) {
+                await saveGrokVideoToIDB(video);
+                await saveGrokMetadata(video.id, {
+                    requestId: video.id,
+                    prompt: video.prompt,
+                    videoUrl: video.url,
+                    config: {
+                        duration: video.duration,
+                        resolution: video.resolution
+                    },
+                    createdAt: video.createdAt || new Date().toISOString()
+                });
+            }
+
+            localStorage.setItem('grok_migration_v12.14_done', 'true');
+            console.log('✅ Migration complete');
+        }
+        // ========== END GROK PERSISTENCE SYSTEM ==========
+
         // Pre-load video to cache - UPDATED WITH LRU + IndexedDB
         async function preloadVideoToCache(videoId, videoUrl, provider) {
             if (!videoId || !videoUrl) {
                 console.warn('⚠️ preloadVideoToCache: Missing videoId or videoUrl');
+                return null;
+            }
+
+            // 🔧 v2.12.13: Skip preload for Grok (no CORS headers - can't fetch)
+            // Grok videos will be loaded directly in modal when clicked
+            if (provider === 'grok') {
+                console.log('⏭️ Skipping preload for Grok video (no CORS support):', videoId);
                 return null;
             }
 
@@ -3678,6 +4006,8 @@ Previous Releases:
         }
 
         // --- Populate Model Dropdown from CONFIG ---
+        const SELECTED_MODEL_KEY = 'vidist_selected_model';  // 💾 localStorage key for model persistence
+
         function populateModelDropdown() {
             const modelSelect = document.getElementById('model-select');
             const dropdownList = document.getElementById('model-dropdown-list');
@@ -3699,6 +4029,9 @@ Previous Releases:
                 if (key.includes('kling')) {
                     return 'assets/kling.png';
                 }
+                if (key.includes('grok')) {
+                    return 'assets/grok.png';
+                }
                 return 'assets/wan.png';
             }
 
@@ -3707,8 +4040,10 @@ Previous Releases:
                 let durationText;
                 if (config.allowedDurations) {
                     durationText = `(${config.allowedDurations.join('/')}s)`;
-                } else {
+                } else if (config.minDuration && config.maxDuration) {
                     durationText = `(${config.minDuration}-${config.maxDuration}s)`;
+                } else {
+                    durationText = '';  // No duration for image models
                 }
 
                 let suffix = '';
@@ -3716,12 +4051,23 @@ Previous Releases:
                     suffix = ' [Extend]';
                 } else if (config.supportsShotType) {
                     suffix = ' [Pro]';
+                } else if (config.provider === 'grok') {
+                    suffix = ' [Grok]';
                 }
 
-                return `${config.name} ${durationText}${suffix}`;
+                return `${config.name} ${durationText}${suffix}`.trim();
             }
 
+            // 💾 Restore last selected model from localStorage
+            const savedModel = localStorage.getItem(SELECTED_MODEL_KEY);
             let defaultKey = 'ws-wan-25-i2v';
+
+            if (savedModel && MODEL_CONFIG[savedModel]) {
+                defaultKey = savedModel;
+                console.log('💾 Restored model from localStorage:', savedModel);
+            } else {
+                console.log('📋 Using default model:', defaultKey);
+            }
 
             Object.entries(MODEL_CONFIG).forEach(([key, config]) => {
                 // ✨ NEW: Skip image edit models (they're for background use only)
@@ -3799,6 +4145,10 @@ Previous Releases:
                 modelSelect.value = key;
                 selectedIcon.src = iconPath;
                 selectedText.textContent = displayText;
+
+                // 💾 Save selected model to localStorage
+                localStorage.setItem(SELECTED_MODEL_KEY, key);
+                console.log('💾 Model selection saved:', key);
 
                 // Trigger change event on hidden select
                 modelSelect.dispatchEvent(new Event('change'));
@@ -3884,6 +4234,29 @@ Previous Releases:
                 await initIndexedDB();
                 console.log('✅ IndexedDB ready');
 
+                // 💾 v2.12.14: Initialize Grok persistence system
+                await initGrokDB();
+                console.log('✅ Grok IndexedDB ready');
+
+                // 🔄 v2.12.14: Migrate existing Grok videos
+                await migrateExistingGrokVideos();
+
+                // 🔄 v2.12.14: Recover Grok videos from IndexedDB
+                const recovered = await recoverGrokVideos();
+                if (recovered.length > 0) {
+                    console.log(`🔄 Recovered ${recovered.length} Grok videos`);
+
+                    // Merge recovered with videoHistoryData (deduplicate)
+                    const existingIds = new Set(videoHistoryData.map(v => v.id));
+                    const newRecovered = recovered.filter(v => !existingIds.has(v.id));
+
+                    if (newRecovered.length > 0) {
+                        videoHistoryData = [...newRecovered, ...videoHistoryData];
+                        renderVideoHistory();
+                        console.log(`➕ Added ${newRecovered.length} recovered videos to history`);
+                    }
+                }
+
                 // Run auto-clean on startup
                 await cleanExpiredCache();
 
@@ -3941,6 +4314,20 @@ Previous Releases:
             if (savedApiKey_gemini) {
                 const apiKeyInput_gemini = document.getElementById('api-key-gemini');
                 apiKeyInput_gemini.value = savedApiKey_gemini;
+            }
+
+            // Load Grok API key from localStorage
+            const savedApiKey_grok = localStorage.getItem('grok_api_key');
+            if (savedApiKey_grok) {
+                const apiKeyInput_grok = document.getElementById('api-key-grok');
+                apiKeyInput_grok.value = savedApiKey_grok;
+            }
+
+            // Load imgbb API key from localStorage
+            const savedApiKey_imgbb = localStorage.getItem('imgbb_api_key');
+            if (savedApiKey_imgbb) {
+                const apiKeyInput_imgbb = document.getElementById('api-key-imgbb');
+                apiKeyInput_imgbb.value = savedApiKey_imgbb;
             }
 
             fetchUsageStats_Wavespeed(); // โหลด Wavespeed balance เมื่อเปิดหน้า
@@ -4148,6 +4535,60 @@ Previous Releases:
                 }, 2000);
 
                 console.log('✅ Gemini API key saved to localStorage');
+            });
+
+            // Grok API Key Save Button (x.ai)
+            const saveGrokBtn = document.getElementById('save-grok-key');
+            const apiKeyInput_grok = document.getElementById('api-key-grok');
+            saveGrokBtn.addEventListener('click', () => {
+                const key = apiKeyInput_grok.value.trim();
+                localStorage.setItem('grok_api_key', key);
+
+                // Visual feedback
+                const originalHTML = saveGrokBtn.innerHTML;
+                saveGrokBtn.innerHTML = `
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <span>Saved!</span>
+                `;
+                saveGrokBtn.classList.add('bg-emerald-600', 'hover:bg-emerald-700');
+                saveGrokBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
+
+                setTimeout(() => {
+                    saveGrokBtn.innerHTML = originalHTML;
+                    saveGrokBtn.classList.remove('bg-emerald-600', 'hover:bg-emerald-700');
+                    saveGrokBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+                }, 2000);
+
+                console.log('✅ Grok API key saved to localStorage');
+            });
+
+            // imgbb API Key Save Button (for Grok video generation)
+            const saveImgbbBtn = document.getElementById('save-imgbb-key');
+            const apiKeyInput_imgbb = document.getElementById('api-key-imgbb');
+            saveImgbbBtn.addEventListener('click', () => {
+                const key = apiKeyInput_imgbb.value.trim();
+                localStorage.setItem('imgbb_api_key', key);
+
+                // Visual feedback
+                const originalHTML = saveImgbbBtn.innerHTML;
+                saveImgbbBtn.innerHTML = `
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <span>Saved!</span>
+                `;
+                saveImgbbBtn.classList.add('bg-emerald-600', 'hover:bg-emerald-700');
+                saveImgbbBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+
+                setTimeout(() => {
+                    saveImgbbBtn.innerHTML = originalHTML;
+                    saveImgbbBtn.classList.remove('bg-emerald-600', 'hover:bg-emerald-700');
+                    saveImgbbBtn.classList.add('bg-blue-600', 'hover:bg-blue-700');
+                }, 2000);
+
+                console.log('✅ imgbb API key saved to localStorage');
             });
 
             // API Toggle Event Listeners
@@ -5716,9 +6157,32 @@ Previous Releases:
             const config = MODEL_CONFIG[selectedModelValue];
             currentProvider = config.provider; // Set provider for this run
 
-            // Get Wavespeed API key
-            const apiKey = apiKeyInput_ws.value.trim();
-            if (!apiKey) { alert('กรุณาใส่ Wavespeed API key'); apiKeySection.classList.remove('hidden'); apiKeyChevron.style.transform = 'rotate(180deg)'; return; }
+            // Get API key based on provider
+            let apiKey;
+            if (config.provider === 'grok') {
+                // Get Grok API key
+                apiKey = getGrokApiKey();
+                if (!apiKey) {
+                    alert('❌ Please enter your Grok API Key in Settings.\n\nGet one at: https://console.x.ai/');
+                    return;
+                }
+
+                // Check imgbb API key for video generation (required for public URL upload)
+                const imgbbKey = localStorage.getItem('imgbb_api_key');
+                if (!imgbbKey) {
+                    alert('❌ Please enter your imgbb API Key in Settings.\n\nRequired for Grok video generation (image hosting).\nGet one at: https://api.imgbb.com/');
+                    return;
+                }
+            } else {
+                // Get Wavespeed API key
+                apiKey = apiKeyInput_ws.value.trim();
+                if (!apiKey) {
+                    alert('กรุณาใส่ Wavespeed API key');
+                    apiKeySection.classList.remove('hidden');
+                    apiKeyChevron.style.transform = 'rotate(180deg)';
+                    return;
+                }
+            }
 
             const prompt = promptTextarea.value.trim();
             if (!prompt) { alert('กรุณาใส่ Prompt'); return; }
@@ -5867,41 +6331,74 @@ Previous Releases:
             console.log('✨ Added placeholder video to history:', tempPlaceholderId);
             // ========== END: Placeholder Video ==========
 
-            // --- Call Wavespeed API ---
+            // --- Call Provider API (Wavespeed or Grok) ---
             try {
-                // Prepare start video data for Video Extend models
-                let startVideoData = null;
-                if (config.requiresStartVideo === true) {
-                    if (currentVideoUrl) {
-                        startVideoData = currentVideoUrl;
-                    } else if (currentVideoBase64) {
-                        startVideoData = `data:video/mp4;base64,${currentVideoBase64}`;
-                    }
-                }
+                let success;
 
-                // Pass imageBase64Data (for Prompt Craft), startVideoData (for Extend), lastImageBase64Data (for Kling O1), and AbortController
-                const success = await generateVideo_Wavespeed(apiKey, config, prompt, imageBase64Data, duration, resolution, negativePrompt, audioUrlValue, shotType, promptExpansion, startVideoData, lastImageBase64Data, AppState.generation.abortController);
+                if (config.provider === 'grok') {
+                    // --- Call Grok API ---
+                    console.log('🚀 Using Grok provider');
+
+                    // 📐 For I2V mode: Don't pass aspect ratio → Grok auto-detects from source image
+                    // For T2V mode: Would read from UI selection (not implemented yet)
+                    const aspectRatio = null;  // Let Grok auto-detect from image
+
+                    success = await generateVideo_Grok(
+                        apiKey,
+                        config,
+                        prompt,
+                        imageBase64Data,
+                        duration,
+                        resolution,
+                        aspectRatio,
+                        AppState.generation.abortController
+                    );
+                } else {
+                    // --- Call Wavespeed API ---
+                    console.log('🚀 Using Wavespeed provider');
+
+                    // Prepare start video data for Video Extend models
+                    let startVideoData = null;
+                    if (config.requiresStartVideo === true) {
+                        if (currentVideoUrl) {
+                            startVideoData = currentVideoUrl;
+                        } else if (currentVideoBase64) {
+                            startVideoData = `data:video/mp4;base64,${currentVideoBase64}`;
+                        }
+                    }
+
+                    success = await generateVideo_Wavespeed(
+                        apiKey,
+                        config,
+                        prompt,
+                        imageBase64Data,
+                        duration,
+                        resolution,
+                        negativePrompt,
+                        audioUrlValue,
+                        shotType,
+                        promptExpansion,
+                        startVideoData,
+                        lastImageBase64Data,
+                        AppState.generation.abortController
+                    );
+                }
 
                 // Start polling after successful POST request
                 if (success && currentGenerationId && currentPollingUrl) {
                     syncBothUIs('updateStatusText', { text: '✅ ส่งคำขอสำเร็จ - กำลังตรวจสอบสถานะ...' });
                     syncBothUIs('updateProgress', { width: '10%' });
-                    startPolling(apiKey, currentPollingUrl); // Pass correct apiKey and the globally set URL
+                    startPolling(apiKey, currentPollingUrl, config.provider); // Pass provider info
                 } else if (!success) {
-                    // If generateVideo function returned false or threw an error handled internally
-                    // handleGenerationError would have already been called.
-                    // If it returned true but URLs weren't set (shouldn't happen with current logic), log it.
                     if (success) {
                         console.error("Generate function succeeded but polling info is missing.");
                         handleGenerationError(new Error("ข้อมูลสำหรับ Polling ไม่ครบถ้วน"));
                     }
-                    // Ensure button is re-enabled if POST failed early
                     syncBothUIs('enableButtons');
                     generateSpinner.classList.add('hidden');
                     syncBothUIs('hideCancelButton');
                 }
             } catch (error) {
-                // Catch errors during the initial POST request itself if not caught inside generateVideo_*
                 handleGenerationError(error);
             }
         }
@@ -6066,12 +6563,12 @@ Previous Releases:
         }
         // ========== END: แก้ไขฟังก์ชันนี้ ==========
 
-        // --- Unified Polling Function ---
-        function startPolling(providerApiKey, pollingUrl) {
+        // --- Unified Polling Function (Wavespeed & Grok) ---
+        function startPolling(providerApiKey, pollingUrl, provider = 'wavespeed') {
             clearPollingAndTimer(); // Clear previous intervals first
 
             // Log arguments for debugging
-            console.log("startPolling called with:", { providerApiKey: providerApiKey ? '***' : 'MISSING', pollingUrl });
+            console.log("startPolling called with:", { providerApiKey: providerApiKey ? '***' : 'MISSING', pollingUrl, provider });
 
             // CRITICAL CHECK: Use arguments directly
             if (!pollingUrl || !providerApiKey) {
@@ -6135,15 +6632,46 @@ Previous Releases:
 
                     let status = 'failed'; let isSuccess = false; let videoUrl = null; let errorMessage = "Unknown error"; let completedData = null;
 
-                    // Parse Wavespeed response
-                    isSuccess = data.code === 200 && data.data;
-                    if (isSuccess) {
-                        status = data.data.status;
-                        videoUrl = (status === 'completed' || status === 'succeeded') && data.data.outputs && data.data.outputs.length > 0 ? data.data.outputs[0] : null;
-                        errorMessage = data.data.error;
-                        completedData = data.data;
+                    // Parse response based on provider
+                    if (provider === 'grok') {
+                        // 🚨 GROK API DOESN'T RETURN STATUS FIELD!
+                        // Actual response: { video: { url, duration, respect_moderation }, model: "..." }
+                        // Docs say: { url, duration } (flat) but actual is nested
+                        // We infer status from presence of url or error
+                        const videoData = data.video || data;  // Support both nested and flat structure
+                        videoUrl = videoData.url;
+                        errorMessage = videoData.error || videoData.error_message;
+
+                        // Infer status based on what fields exist
+                        if (videoUrl) {
+                            // Video ready!
+                            status = 'completed';
+                            isSuccess = true;
+                        } else if (errorMessage) {
+                            // Generation failed
+                            status = 'failed';
+                            isSuccess = true;  // isSuccess means we got a valid response
+                        } else {
+                            // Still processing
+                            status = 'processing';
+                            isSuccess = true;
+                        }
+
+                        completedData = videoData;
+
+                        console.log(`🤖 Grok inferred status: ${status} (has_url=${!!videoUrl}, has_error=${!!errorMessage})`);
+                        console.log(`🤖 Grok video data:`, videoData);
                     } else {
-                        errorMessage = data.message || "Wavespeed API Error";
+                        // Wavespeed response format
+                        isSuccess = data.code === 200 && data.data;
+                        if (isSuccess) {
+                            status = data.data.status;
+                            videoUrl = (status === 'completed' || status === 'succeeded') && data.data.outputs && data.data.outputs.length > 0 ? data.data.outputs[0] : null;
+                            errorMessage = data.data.error;
+                            completedData = data.data;
+                        } else {
+                            errorMessage = data.message || "Wavespeed API Error";
+                        }
                     }
 
                     if (isSuccess) {
@@ -6197,18 +6725,49 @@ Previous Releases:
 
                                 console.log('🎬 Video URL from API:', videoUrl);
 
+                                // ========== 🚀 GROK FIX: Download as blob to avoid CORS issues ==========
+                                // IMPORTANT: Keep original URL for history storage (blob URLs expire)
+                                // Only download blob for immediate playback preview
+                                let finalVideoUrl = videoUrl;
+                                if (provider === 'grok') {
+                                    console.log('🔄 Grok video detected - downloading as blob for preview...');
+                                    statusText.textContent = '📥 กำลังดาวน์โหลดวิดีโอ...';
+                                    try {
+                                        finalVideoUrl = await downloadGrokVideoAsBlob(videoUrl);
+                                        console.log('✅ Downloaded blob for preview (original URL will be saved to history)');
+                                    } catch (blobError) {
+                                        console.error('❌ Failed to download blob:', blobError);
+                                        // Use original URL as fallback
+                                        finalVideoUrl = videoUrl;
+                                    }
+                                }
+                                // ========== END: Grok Blob Download ==========
+
                                 const finalData = {
-                                    video_url: videoUrl,
-                                    prompt: currentPrompt, // Use prompt from UI at time of completion
-                                    model: modelName, // Use extracted model name (string)
+                                    video_url: videoUrl,  // 🚨 CRITICAL: Always save ORIGINAL URL (not blob) for history
+                                    prompt: currentPrompt,
+                                    model: modelName,
                                     duration: completedData?.duration || (durationSelectWavespeed ? parseInt(durationSelectWavespeed.value) : 0) || 0,
                                     resolution: completedData?.resolution || (resolutionSelect ? resolutionSelect.value : '1080p'),
-                                    completed_at: completedData?.completed_at || completedData?.updated_at || new Date().toISOString(), // Use completed_at or updated_at from response if available
-                                    processing_time: completedData?.timings?.inference || (completedData?.processing_time) || (elapsedSeconds * 1000) // Use inference/processing_time from API if available
+                                    completed_at: completedData?.completed_at || completedData?.updated_at || new Date().toISOString(),
+                                    processing_time: completedData?.timings?.inference || (completedData?.processing_time) || (elapsedSeconds * 1000)
                                 };
                                 handleGenerationSuccess(finalData, elapsedSeconds);
                             } else { throw new Error(`สถานะ ${status} แต่ไม่พบ Video URL`); }
                         } else if (status === 'failed' || status === 'canceled') {
+                            // 🚨 CRITICAL: Check for Grok content moderation (stop immediately to save tokens/money)
+                            if (provider === 'grok' && errorMessage) {
+                                const isContentFilter =
+                                    errorMessage.toLowerCase().includes('content moderation') ||
+                                    errorMessage.toLowerCase().includes('content filter') ||
+                                    errorMessage.toLowerCase().includes('content policy') ||
+                                    errorMessage.toLowerCase().includes('rejected by');
+
+                                if (isContentFilter) {
+                                    throw new Error(`🚫 GROK CONTENT FILTER: ${errorMessage}\n\n⚠️ หยุดทันทีเพื่อป้องกันการเสียเงิน - Grok คิดเงินทุกครั้งแม้สร้างไม่สำเร็จ!`);
+                                }
+                            }
+
                             throw new Error(errorMessage || `การสร้างล้มเหลว/ยกเลิก (Status: ${status})`);
                         } // Else: continue polling
                     } else { throw new Error(errorMessage); }
@@ -6226,7 +6785,10 @@ Previous Releases:
                         errorMsg.includes("do not support") ||           // Content filter rejection
                         errorMsg.includes("photorealistic people") ||    // OpenAI content filter
                         errorMsg.includes("NSFW") ||                     // NSFW filter
-                        errorMsg.includes("inappropriate");              // Inappropriate content
+                        errorMsg.includes("inappropriate") ||            // Inappropriate content
+                        errorMsg.includes("GROK CONTENT FILTER") ||      // 🚨 CRITICAL: Grok content moderation (saves money!)
+                        errorMsg.includes("content moderation") ||       // Content moderation
+                        errorMsg.includes("rejected by");                // Rejected by filter
 
                     if (shouldStopPolling) {
                         console.error(`❌ ${currentProvider} Critical Error - Stopping polling:`, errorMsg);
@@ -6316,7 +6878,7 @@ Previous Releases:
             statusText.textContent = `${displayText}... (${elapsedSeconds} วินาที)`;
         }
 
-        function handleGenerationSuccess(data, elapsedSeconds) {
+        async function handleGenerationSuccess(data, elapsedSeconds) {
             clearPollingAndTimer();
 
             // ========== ✅ PERFORMANCE FIX: Reset AbortController on completion ==========
@@ -6389,8 +6951,14 @@ Previous Releases:
             });
 
             // Video is auto-saved to history (no legacy player to show)
-            saveToHistory(); // Auto-save successful generation
-            console.log('✅ Video generated and saved to history:', data.video_url);
+            // 💾 v2.12.14: Use atomic save for Grok videos
+            if (currentProvider === 'grok') {
+                await saveGrokVideoAtomic(currentVideoData);
+                console.log('✅ Grok video saved atomically:', data.video_url);
+            } else {
+                saveToHistory(); // Auto-save successful generation
+                console.log('✅ Video generated and saved to history:', data.video_url);
+            }
 
             // ========== Save Prompt & Apply Dimming Effect After Successful Generation ==========
             // Save the prompt that was used for this generation
@@ -6449,31 +7017,36 @@ Previous Releases:
                 displayMsg = "❌ ไม่พบงานสร้างวิดีโอ";
             }
 
-            // ========== ✨ NEW: Update placeholder to failed status ==========
+            // ========== ✨ UPDATED: Remove placeholder immediately on failure (don't save failed generations) ==========
             if (currentGenerationId) {
                 const placeholderIndex = videoHistoryData.findIndex(v => v.id === currentGenerationId);
                 if (placeholderIndex !== -1) {
-                    videoHistoryData[placeholderIndex].status = 'failed';
-                    videoHistoryData[placeholderIndex].error = displayMsg;
-                    console.log('✨ Updated placeholder to failed status:', currentGenerationId);
+                    // Remove failed item from history
+                    videoHistoryData.splice(placeholderIndex, 1);
+                    console.log('🗑️ Removed failed placeholder from history:', currentGenerationId);
 
-                    // Re-render history to show failed status
+                    // Save cleaned history to localStorage
+                    safeSetLocalStorage('videoHistory', JSON.stringify(videoHistoryData));
+
+                    // Re-render history without the failed item
                     renderVideoHistory();
                 }
             } else {
                 // If no generation ID, find placeholder by flag
                 const placeholderIndex = videoHistoryData.findIndex(v => v.isPlaceholder === true);
                 if (placeholderIndex !== -1) {
-                    videoHistoryData[placeholderIndex].status = 'failed';
-                    videoHistoryData[placeholderIndex].error = displayMsg;
-                    delete videoHistoryData[placeholderIndex].isPlaceholder;
-                    console.log('✨ Updated placeholder to failed status (no ID)');
+                    // Remove failed item from history
+                    videoHistoryData.splice(placeholderIndex, 1);
+                    console.log('🗑️ Removed failed placeholder from history (no ID)');
 
-                    // Re-render history to show failed status
+                    // Save cleaned history to localStorage
+                    safeSetLocalStorage('videoHistory', JSON.stringify(videoHistoryData));
+
+                    // Re-render history without the failed item
                     renderVideoHistory();
                 }
             }
-            // ========== END: Update Placeholder ==========
+            // ========== END: Remove Failed Placeholder ==========
 
             syncBothUIs('updateStatusBadge', { className: 'status-failed', text: 'ERROR' });
             syncBothUIs('updateStatusText', { text: displayMsg });
@@ -7285,6 +7858,439 @@ Previous Releases:
 
         // ========== END: Gemini Integration ==========
 
+        // ========== 🚀 NEW: Grok API Integration (x.ai) ==========
+
+        // Helper: Convert base64 to Blob for file upload
+        function base64ToBlob(base64Data, contentType = 'image/jpeg') {
+            const base64 = base64Data.includes(',') ? base64Data.split(',')[1] : base64Data;
+            const byteCharacters = atob(base64);
+            const byteNumbers = new Array(byteCharacters.length);
+            for (let i = 0; i < byteCharacters.length; i++) {
+                byteNumbers[i] = byteCharacters.charCodeAt(i);
+            }
+            const byteArray = new Uint8Array(byteNumbers);
+            return new Blob([byteArray], { type: contentType });
+        }
+
+        // Upload image to imgbb (for Grok video generation - requires public URL)
+        async function uploadImageToImgbb(base64Data) {
+            const imgbbApiKey = localStorage.getItem('imgbb_api_key');
+            if (!imgbbApiKey) {
+                throw new Error('imgbb API key not found. Please add it in Settings.');
+            }
+
+            console.log('📤 Uploading image to imgbb...');
+
+            try {
+                // Remove data:image/jpeg;base64, prefix if present
+                const base64 = base64Data.includes(',') ? base64Data.split(',')[1] : base64Data;
+
+                // Create form data
+                const formData = new FormData();
+                formData.append('image', base64);
+
+                // Upload to imgbb
+                const response = await fetch(`https://api.imgbb.com/1/upload?key=${imgbbApiKey}`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error(`imgbb upload failed: ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                if (!data.success) {
+                    throw new Error(data.error?.message || 'Upload failed');
+                }
+
+                const publicUrl = data.data.url;
+                console.log('✅ Image uploaded to imgbb:', publicUrl);
+
+                return publicUrl;
+            } catch (error) {
+                console.error('❌ imgbb upload failed:', error);
+                throw new Error(`Image upload failed: ${error.message}`);
+            }
+        }
+
+        // Upload image for Grok (uses imgbb to get public URL)
+        async function uploadImageToGrok(base64Data) {
+            // Grok video generation requires PUBLIC URL, not file_id
+            // Files API is for chat/RAG only
+            return await uploadImageToImgbb(base64Data);
+        }
+
+        // Generate video with Grok
+        async function generateVideo_Grok(apiKey, config, prompt, base64Data, duration, resolution, aspectRatio = null, abortController = null) {
+            console.log('🎬 Starting Grok video generation...');
+
+            if (!base64Data) {
+                throw new Error("No image provided for Grok Image-to-Video");
+            }
+
+            try {
+                // 1. Upload image to get file_id or public URL
+                const imageRef = await uploadImageToGrok(base64Data);
+
+                // 2. Build payload
+                const payload = {
+                    model: 'grok-imagine-video',
+                    prompt: prompt,
+                    image: { url: imageRef },  // Try file_id first (might need public URL)
+                    duration: duration || 5,
+                    resolution: resolution || '720p'
+                };
+
+                // Add aspect ratio ONLY if explicitly provided (otherwise Grok auto-detects from image)
+                if (aspectRatio && config.aspectRatios?.includes(aspectRatio)) {
+                    payload.aspect_ratio = aspectRatio;
+                    console.log('📐 Using explicit aspect ratio:', aspectRatio);
+                } else {
+                    console.log('📐 Aspect ratio omitted - Grok will auto-detect from source image');
+                }
+
+                console.log('📤 Grok video generation request:', payload);
+
+                // 3. Start generation
+                let timeoutId = null;
+                if (abortController) {
+                    timeoutId = setTimeout(() => {
+                        abortController.abort();
+                        console.log('⏱️ Grok request timeout (120s) - aborted');
+                    }, 120000);
+                }
+
+                const response = await fetch('https://api.x.ai/v1/videos/generations', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${apiKey}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload),
+                    signal: abortController?.signal
+                });
+
+                if (timeoutId) clearTimeout(timeoutId);
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error?.message || `HTTP ${response.status}`);
+                }
+
+                const data = await response.json();
+                console.log('✅ Grok generation response:', data);
+
+                // 4. Extract request_id (support both flat and nested structure)
+                const requestId = data.request_id || data.video?.request_id || data.id;
+                if (!requestId) {
+                    throw new Error('No request_id found in Grok response');
+                }
+
+                console.log('✅ Grok generation started:', requestId);
+                currentGenerationId = requestId;
+                currentPollingUrl = `https://api.x.ai/v1/videos/${requestId}`;
+                syncBothUIs('updateGenerationDetails', { id: requestId });
+
+                // 💾 v2.12.14: CRITICAL - Save metadata immediately for recovery
+                await saveGrokMetadata(requestId, {
+                    requestId,
+                    prompt: prompt,
+                    config: {
+                        duration,
+                        resolution,
+                        aspectRatio
+                    },
+                    createdAt: new Date().toISOString()
+                });
+
+                // Save task input
+                const taskId = currentGenerationId;
+                saveTaskInput(taskId, {
+                    prompt: prompt,
+                    duration: duration,
+                    resolution: resolution,
+                    aspectRatio: aspectRatio,
+                    model: config?.name || 'Grok Imagine Video',
+                    modelKey: 'grok-imagine-video',
+                    timestamp: new Date().toISOString(),
+                    craftData: captureCraftData()
+                });
+
+                // Update placeholder
+                const placeholderIndex = videoHistoryData.findIndex(v => v.isPlaceholder === true);
+                if (placeholderIndex !== -1) {
+                    videoHistoryData[placeholderIndex].id = requestId;
+                    videoHistoryData[placeholderIndex].status = 'pending';
+                    delete videoHistoryData[placeholderIndex].isPlaceholder;
+                    renderVideoHistory();
+                }
+
+                saveGenerationState();
+                return true;
+
+            } catch (error) {
+                if (error.name === 'AbortError') {
+                    console.log('⏹️ Grok generation cancelled');
+                    AppState.generation.abortController = null;
+                    return false;
+                }
+
+                handleGenerationError(error);
+                return false;
+            }
+        }
+
+        // Poll Grok video result
+        async function pollGrokVideoStatus(requestId, apiKey) {
+            console.log('🔄 Polling Grok video status:', requestId);
+
+            try {
+                const response = await fetch(`https://api.x.ai/v1/videos/${requestId}`, {
+                    headers: { 'Authorization': `Bearer ${apiKey}` }
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error?.message || `HTTP ${response.status}`);
+                }
+
+                const data = await response.json();
+                console.log('📥 Grok status:', data.status);
+
+                return {
+                    status: data.status,  // pending|processing|completed|failed
+                    url: data.url,
+                    error: data.error
+                };
+
+            } catch (error) {
+                console.error('❌ Grok polling error:', error);
+                return { status: 'failed', error: error.message };
+            }
+        }
+
+        // Edit image with Grok
+        async function editImage_Grok() {
+            console.log('🖼️ Starting Grok image edit...');
+
+            // Validation
+            if (!validateImageEditGrok()) {
+                return;
+            }
+
+            // Get image data
+            const imageData = captureImageData();
+            if (!imageData || !imageData.cropped) {
+                alert('❌ No image to edit. Please upload an image first.');
+                return;
+            }
+
+            // Get prompt
+            const prompt = document.getElementById('prompt')?.value?.trim();
+            if (!prompt) {
+                alert('❌ Please enter editing instructions.');
+                return;
+            }
+
+            // Show processing overlay
+            updateImageEditOverlay('⚙️ กำลังแก้ไขภาพ...');
+
+            const apiKey = getGrokApiKey();
+
+            try {
+                // Grok accepts base64 data URI directly for image editing!
+                const dataUri = imageData.cropped;
+
+                const payload = {
+                    model: 'grok-imagine-image',
+                    image: dataUri,  // data:image/jpeg;base64,...
+                    prompt: prompt
+                };
+
+                console.log('📤 Grok image edit request');
+
+                const response = await fetch('https://api.x.ai/v1/images/edits', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${apiKey}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error?.message || `HTTP ${response.status}`);
+                }
+
+                const data = await response.json();
+                console.log('✅ Grok image edit complete');
+
+                // Get result URL (instant response, no polling!)
+                const resultUrl = data.data?.[0]?.url;
+                if (!resultUrl) {
+                    throw new Error('No image URL in response');
+                }
+
+                // Download and display edited image
+                await handleImageEditCompleteGrok(resultUrl);
+
+            } catch (error) {
+                console.error('❌ Grok image edit failed:', error);
+                updateImageEditOverlay('❌ แก้ไขภาพล้มเหลว');
+
+                let errorMessage = `❌ Image Edit Failed\n\n${error.message}`;
+
+                // Check for content filter (CRITICAL for testing!)
+                if (checkGrokContentFilter(error.message)) {
+                    errorMessage += '\n\n⚠️ Content Filter Detected!';
+                    console.warn('🚨 GROK CONTENT FILTER TRIGGERED:', error.message);
+                }
+
+                alert(errorMessage);
+            }
+        }
+
+        // Handle Grok image edit complete
+        async function handleImageEditCompleteGrok(imageUrl) {
+            console.log('📥 Downloading edited image from Grok:', imageUrl);
+
+            try {
+                // Download image
+                const response = await fetch(imageUrl);
+                if (!response.ok) {
+                    throw new Error(`Failed to download image: ${response.status}`);
+                }
+
+                const blob = await response.blob();
+                const base64Data = await new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => resolve(reader.result);
+                    reader.readAsDataURL(blob);
+                });
+
+                // Display edited image
+                const imageDisplay = document.getElementById('uploaded-image-display');
+                if (imageDisplay) {
+                    imageDisplay.src = base64Data;
+                    console.log('✅ Edited image displayed');
+                }
+
+                // Hide overlay
+                updateImageEditOverlay('');
+
+                // Show success message
+                alert('✅ Image edited successfully with Grok!');
+
+            } catch (error) {
+                console.error('❌ Failed to display edited image:', error);
+                updateImageEditOverlay('❌ ล้มเหลว');
+                alert(`❌ Failed to download edited image:\n\n${error.message}`);
+            }
+        }
+
+        // Validate Grok image edit
+        function validateImageEditGrok() {
+            // Check API key
+            const apiKey = getGrokApiKey();
+            if (!apiKey) {
+                alert('❌ Please enter your Grok API Key in Settings.\n\nGet one at: https://console.x.ai/');
+                return false;
+            }
+
+            // Check image
+            const imageDisplay = document.getElementById('uploaded-image-display');
+            if (!imageDisplay || !imageDisplay.src || imageDisplay.src === '') {
+                alert('❌ No image to edit. Please upload an image first.');
+                return false;
+            }
+
+            // Check prompt
+            const prompt = document.getElementById('prompt')?.value?.trim();
+            if (!prompt) {
+                alert('❌ Please enter editing instructions in the prompt field.');
+                return false;
+            }
+
+            return true;
+        }
+
+        // Get Grok API Key
+        function getGrokApiKey() {
+            return localStorage.getItem('grok_api_key') || '';
+        }
+
+        // Check for Grok content filter (CRITICAL for NSFW testing!)
+        // 🚨 IMPORTANT: Grok charges for every request, even failed ones!
+        function checkGrokContentFilter(errorMessage) {
+            if (!errorMessage) return false;
+
+            const contentFilterKeywords = [
+                'content moderation',       // 🚨 PRIMARY: Grok's actual error message
+                'rejected by',              // 🚨 PRIMARY: "rejected by content moderation"
+                'content filter',
+                'content policy',
+                'policy violation',
+                'inappropriate',
+                'nsfw',
+                'adult',
+                'explicit',
+                'safety',
+                'harmful'
+            ];
+
+            const lowerMsg = errorMessage.toLowerCase();
+            return contentFilterKeywords.some(keyword => lowerMsg.includes(keyword));
+        }
+
+        // Download Grok video as blob to avoid CORS issues
+        async function downloadGrokVideoAsBlob(videoUrl) {
+            console.log('📥 Downloading Grok video as blob:', videoUrl);
+
+            try {
+                // 🧪 TEST: Try WITHOUT Authorization header first
+                // Theory: Grok video URLs might be public/pre-signed and don't need auth
+                console.log('🧪 Attempting download WITHOUT Authorization header...');
+                let response = await fetch(videoUrl);
+
+                if (!response.ok) {
+                    console.warn(`⚠️ Download without auth failed: ${response.status}`);
+
+                    // Fallback: Try WITH Authorization header
+                    console.log('🔄 Retrying WITH Authorization header...');
+                    const apiKey = getGrokApiKey();
+                    response = await fetch(videoUrl, {
+                        headers: {
+                            'Authorization': `Bearer ${apiKey}`
+                        }
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`Failed with auth: ${response.status}`);
+                    }
+                }
+
+                console.log(`✅ Download successful (status: ${response.status})`);
+                const blob = await response.blob();
+                console.log('✅ Video downloaded, size:', blob.size, 'bytes');
+
+                // Create blob URL
+                const blobUrl = URL.createObjectURL(blob);
+                console.log('✅ Blob URL created:', blobUrl);
+
+                return blobUrl;
+            } catch (error) {
+                console.error('❌ Failed to download Grok video:', error);
+                console.error('❌ This video cannot be cached. Using original URL (may have CORS issues)');
+                // Fallback to direct URL (may still have CORS issue)
+                return videoUrl;
+            }
+        }
+
+        // ========== END: Grok API Integration ==========
+
         // ========== ✨ NEW: Global scope for image edit tracking (v2.4.2) ==========
         let currentEditPredictionId = null;
         let currentEditStartTime = null;
@@ -7297,7 +8303,7 @@ Previous Releases:
             currentEditStartTime = Date.now();
             // ========== END: Store Variables ==========
 
-            const maxAttempts = 120;  // 2 minutes max
+            const maxAttempts = 300;  // 5 minutes max (increased for WAN 2.6 image edit)
             const expectedDuration = 30000; // 30 seconds in milliseconds
             let attempts = 0;
 
@@ -7429,23 +8435,87 @@ Previous Releases:
                 if (currentEditPredictionId) {
                     const placeholderIndex = videoHistoryData.findIndex(v => v.id === currentEditPredictionId);
 
+                    // 🔍 DEBUG: Log search results (v2.12.15)
+                    console.log('🔍 Searching for placeholder:', {
+                        searchId: currentEditPredictionId,
+                        foundIndex: placeholderIndex,
+                        totalItems: videoHistoryData.length,
+                        allIds: videoHistoryData.map(v => v.id).slice(0, 10)
+                    });
+
                     if (placeholderIndex !== -1) {
                         // Calculate processing time
                         const processingTimeSec = currentEditStartTime ?
                             ((Date.now() - currentEditStartTime) / 1000).toFixed(1) : 0;
+
+                        // 🔍 DEBUG: Log before update (v2.12.15)
+                        console.log('📝 Before update:', {
+                            status: videoHistoryData[placeholderIndex].status,
+                            initialImage: videoHistoryData[placeholderIndex].initialImage?.substring(0, 50) + '...'
+                        });
 
                         // Update placeholder with completed data
                         videoHistoryData[placeholderIndex] = {
                             ...videoHistoryData[placeholderIndex],
                             url: imageUrl,  // URL ของภาพที่แก้ไขแล้ว
                             initialImage: base64,  // อัปเดต thumbnail เป็นภาพใหม่
-                            status: 'completed',
+                            status: 'completed',  // ← CRITICAL: Update status
                             processingTime: parseFloat(processingTimeSec)
                         };
 
-                        safeSetLocalStorage('videoHistory', JSON.stringify(videoHistoryData));
-                        renderVideoHistory();  // Re-render เพื่อแสดงภาพจริง
+                        // 🔍 DEBUG: Log after update (v2.12.15)
+                        console.log('✅ After update:', {
+                            status: videoHistoryData[placeholderIndex].status,
+                            initialImage: videoHistoryData[placeholderIndex].initialImage?.substring(0, 50) + '...',
+                            url: videoHistoryData[placeholderIndex].url
+                        });
+
+                        // Save to localStorage with validation
+                        const saveSuccess = safeSetLocalStorage('videoHistory', JSON.stringify(videoHistoryData));
+
+                        // 🔍 DEBUG: Log save result (v2.12.15)
+                        console.log('💾 localStorage save:', saveSuccess ? 'SUCCESS' : 'FAILED');
+
+                        // Re-render
+                        renderVideoHistory();
+
                         console.log('✅ Updated image edit placeholder:', currentEditPredictionId);
+                    } else {
+                        // 🚨 ERROR: Placeholder not found (v2.12.15)
+                        console.error('❌ PLACEHOLDER NOT FOUND:', {
+                            searchId: currentEditPredictionId,
+                            totalItems: videoHistoryData.length,
+                            providerCounts: {
+                                wavespeed: videoHistoryData.filter(v => v.provider === 'wavespeed').length,
+                                grok: videoHistoryData.filter(v => v.provider === 'grok').length,
+                                gemini: videoHistoryData.filter(v => v.provider === 'gemini').length
+                            },
+                            recentIds: videoHistoryData.map(v => v.id).slice(0, 5)
+                        });
+
+                        // FALLBACK: Add as new item instead of updating
+                        const processingTimeSec = currentEditStartTime ?
+                            ((Date.now() - currentEditStartTime) / 1000).toFixed(1) : 0;
+
+                        const newItem = {
+                            id: currentEditPredictionId,
+                            url: imageUrl,
+                            initialImage: base64,
+                            prompt: 'Image edit completed',
+                            model: 'Wan 2.6 Image Edit',
+                            modelKey: 'ws-wan-26-image-edit',
+                            provider: 'wavespeed',
+                            outputType: 'image',
+                            status: 'completed',
+                            processingTime: parseFloat(processingTimeSec),
+                            createdAt: new Date().toISOString()
+                        };
+
+                        videoHistoryData.unshift(newItem);
+                        safeSetLocalStorage('videoHistory', JSON.stringify(videoHistoryData));
+                        renderVideoHistory();
+
+                        console.log('➕ Added image edit as new item (fallback)');
                     }
                 }
                 // ========== END: Update Placeholder ==========
@@ -7591,6 +8661,28 @@ Previous Releases:
                 if (!Array.isArray(videoHistoryData)) {
                     console.warn("localStorage 'videoHistory' was not an array, resetting.");
                     videoHistoryData = [];
+                }
+
+                // 🧹 AUTO-CLEANUP: Remove invalid/failed items without URL
+                // 🔧 v2.12.13 FIX: Check BOTH "url" (current) AND "video_url" (legacy) fields
+                const beforeCount = videoHistoryData.length;
+                videoHistoryData = videoHistoryData.filter(video => {
+                    // Keep items that have url OR video_url (legacy) OR are currently processing
+                    const hasValidUrl = (video.url && video.url.trim() !== '') ||
+                                        (video.video_url && video.video_url.trim() !== '');
+                    const isProcessing = video.status === 'pending' || video.status === 'processing' || video.status === 'starting';
+
+                    if (!hasValidUrl && !isProcessing) {
+                        console.log(`🗑️ Auto-cleanup: Removing invalid item ${video.id} (no URL, status: ${video.status})`);
+                        return false;  // Remove this item
+                    }
+                    return true;  // Keep this item
+                });
+
+                // Save cleaned data back to localStorage if any items were removed
+                if (videoHistoryData.length !== beforeCount) {
+                    localStorage.setItem('videoHistory', JSON.stringify(videoHistoryData));
+                    console.log(`✅ Auto-cleanup: Removed ${beforeCount - videoHistoryData.length} invalid items`);
                 }
             } catch (e) {
                 console.error("Error parsing history from localStorage:", e);
@@ -8054,8 +9146,13 @@ Previous Releases:
                 videoUrl = apiData.output;
             }
 
+            // 🛡️ SPECIAL: For completed image edits, NEVER overwrite initialImage (v2.12.15)
+            const isCompletedImageEdit = localItem.outputType === 'image' &&
+                                         localItem.status === 'completed' &&
+                                         localItem.modelKey === 'ws-wan-26-image-edit';
+
             // Smart merge: Preserve all local fields, only update API-specific fields
-            return {
+            const merged = {
                 ...localItem,                     // Keep all local data (base)
                 status: apiData.status || localItem.status,  // Update status from API
                 url: videoUrl || localItem.url,   // Update URL only if API provides one
@@ -8066,6 +9163,14 @@ Previous Releases:
                 // prompt, negativePrompt, craftData, modelKey, settings
                 // These are already in localItem and should NOT be touched
             };
+
+            // 🛡️ CRITICAL: For completed image edits, preserve edited image (v2.12.15)
+            if (isCompletedImageEdit && localItem.initialImage) {
+                merged.initialImage = localItem.initialImage;  // Force keep edited image
+                console.log('🛡️ Protected edited image for:', localItem.id);
+            }
+
+            return merged;
         }
         // ========== END: Smart Merge Helper ==========
 
@@ -8105,8 +9210,27 @@ Previous Releases:
                 }
             } catch (e) { allHistory = []; }
 
+            // 🛡️ v2.12.14: ALWAYS include Grok videos from IndexedDB
+            const grokVideosFromIDB = await getAllGrokVideos();
+            const grokWithProvider = grokVideosFromIDB.map(v => ({ ...v, provider: 'grok' }));
+
             // Separate non-wavespeed items to preserve them (including Gemini which has no API)
-            const otherProviderHistory = allHistory.filter(h => h && h.provider !== 'wavespeed');
+            let otherProviderHistory = allHistory.filter(h => h && h.provider !== 'wavespeed');
+
+            // Merge Grok from IDB with other providers
+            otherProviderHistory = [
+                ...otherProviderHistory,
+                ...grokWithProvider
+            ];
+
+            // Deduplicate by ID
+            const otherProviderMap = new Map();
+            otherProviderHistory.forEach(h => {
+                if (h.id && !otherProviderMap.has(h.id)) {
+                    otherProviderMap.set(h.id, h);
+                }
+            });
+            otherProviderHistory = Array.from(otherProviderMap.values());
 
             // ✨ NEW (v2.9.0): Gemini items don't have API to refresh - keep as-is
             const geminiHistory = otherProviderHistory.filter(h => h && h.provider === 'gemini');
@@ -8278,13 +9402,15 @@ Previous Releases:
                 if (e.name === 'QuotaExceededError' || e.code === 22) {
                     console.warn('⚠️ localStorage quota exceeded during refresh - performing aggressive cleanup');
 
-                    // Aggressive cleanup: Keep only 10 most recent items
-                    const reducedHistory = finalHistory.slice(0, 10);
+                    // 🛡️ v2.12.14: Protect Grok videos during quota cleanup
+                    const grokVideos = finalHistory.filter(h => h.provider === 'grok' && h.status === 'completed');
+                    const otherVideos = finalHistory.filter(h => h.provider !== 'grok');
+                    const reducedHistory = [...grokVideos, ...otherVideos.slice(0, 10)];
                     videoHistoryData = reducedHistory;
 
                     try {
                         localStorage.setItem('videoHistory', JSON.stringify(reducedHistory));
-                        console.log(`🧹 Cleaned up to ${reducedHistory.length} items to free space`);
+                        console.log(`🛡️ Protected ${grokVideos.length} Grok videos, kept ${otherVideos.slice(0, 10).length} others`);
                     } catch (e2) {
                         console.error('❌ Still quota error after cleanup - clearing history entirely');
                         videoHistoryData = [];
@@ -9502,6 +10628,9 @@ Previous Releases:
         async function loadVideoInModal(videoUrl, provider, videoId) {
             console.log('🎬 Loading video in modal:', { url: videoUrl, provider, videoId });
 
+            // 🔧 v2.12.13: Removed new tab workaround - Grok now plays in modal!
+            // Key: Don't set crossOrigin for Grok (opaque CORS mode allows playback)
+
             const loadingOverlay = document.getElementById('video-loading-overlay');
             const videoPlayer = modalVideoPlayer;
 
@@ -9520,12 +10649,11 @@ Previous Releases:
             videoPlayer.style.transition = 'opacity 0.3s ease-in-out';
 
             try {
-                // v2.6.1 FIX: Always load from server (skip cache to avoid buffering issues)
-                // Previous issue: blob cache caused videos to play 2s then pause for 10s
-                // Solution: Stream directly from Wavespeed server every time
-                console.log('🌐 Loading video directly from server (cache bypassed)');
-                await setupVideoLoading(videoPlayer, loadingOverlay, videoUrl);
-                console.log('✅ Video loaded from network and ready');
+                // Load video directly from server
+                // v2.12.13: Pass provider so setupVideoLoading can skip crossOrigin for Grok
+                console.log('🌐 Loading video directly from server');
+                await setupVideoLoading(videoPlayer, loadingOverlay, videoUrl, provider);
+                console.log('✅ Video loaded and ready');
 
             } catch (error) {
                 // Ignore AbortError - happens when user closes modal during load
@@ -9543,7 +10671,8 @@ Previous Releases:
         }
 
         // Helper function to setup video loading and wait for ready
-        function setupVideoLoading(videoPlayer, loadingOverlay, videoSrc) {
+        // v2.12.13: Added provider parameter to skip crossOrigin for Grok
+        function setupVideoLoading(videoPlayer, loadingOverlay, videoSrc, provider = 'wavespeed') {
             return new Promise((resolve, reject) => {
                 // Setup event listeners BEFORE setting src to avoid race conditions
 
@@ -9593,6 +10722,19 @@ Previous Releases:
 
                 // NOW set the src AFTER listeners are attached
                 console.log('🎬 Setting video src:', videoSrc.substring(0, 100) + '...');
+
+                // 🔧 v2.12.13 FIX: Only set crossOrigin for providers with CORS headers
+                // Grok videos DON'T have CORS headers - setting crossOrigin forces CORS check and fails
+                // Without crossOrigin, browser uses "opaque" mode which allows playback!
+                if (provider !== 'grok') {
+                    videoPlayer.crossOrigin = "anonymous";
+                    console.log('🔒 crossOrigin set for', provider);
+                } else {
+                    // Remove any existing crossOrigin attribute for Grok
+                    videoPlayer.removeAttribute('crossorigin');
+                    console.log('🔓 crossOrigin skipped for Grok (opaque CORS mode)');
+                }
+
                 videoPlayer.src = videoSrc;
                 videoPlayer.load(); // Explicitly trigger load
             });
