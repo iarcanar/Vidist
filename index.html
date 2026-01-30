@@ -7733,7 +7733,40 @@ Previous Releases:
                 };
 
                 videoHistoryData.unshift(placeholderImageData);
-                safeSetLocalStorage('videoHistory', JSON.stringify(videoHistoryData));
+
+                // 🔥 v2.12.19: Strip redundant url field from Gemini to save space
+                let historyForSaving = videoHistoryData.map(item => {
+                    // For Gemini image edits: url is redundant (duplicate of initialImage)
+                    if (item.provider === 'gemini' && item.outputType === 'image' && item.initialImage) {
+                        const { url, ...itemWithoutUrl } = item;
+                        return itemWithoutUrl;  // 50% size reduction!
+                    }
+                    return item;  // Keep other items unchanged
+                });
+
+                let saveSuccess = safeSetLocalStorage('videoHistory', JSON.stringify(historyForSaving));
+                console.log(`💾 Gemini image size optimization: Stripped redundant url fields`);
+
+                // 🚨 v2.12.19: EMERGENCY FALLBACK - If still too large, remove old Gemini items
+                if (!saveSuccess && placeholderImageData.provider === 'gemini') {
+                    console.warn('⚠️ Gemini image too large, removing old Gemini items...');
+
+                    const currentGeminiId = placeholderImageData.id;
+                    historyForSaving = historyForSaving.filter(item =>
+                        item.provider !== 'gemini' || item.id === currentGeminiId
+                    );
+
+                    // Keep only: current Gemini + all Grok + 5 others
+                    const currentGemini = historyForSaving.filter(h => h.id === currentGeminiId);
+                    const grokVideos = historyForSaving.filter(h => h.provider === 'grok');
+                    const others = historyForSaving.filter(h => h.provider !== 'gemini' && h.provider !== 'grok').slice(0, 5);
+
+                    videoHistoryData = [...currentGemini, ...grokVideos, ...others];
+
+                    saveSuccess = safeSetLocalStorage('videoHistory', JSON.stringify(videoHistoryData));
+                    console.log(`🔥 Emergency cleanup: ${saveSuccess ? 'SUCCESS' : 'FAILED'}`);
+                }
+
                 renderVideoHistory();
 
                 // Handle completion
@@ -8714,12 +8747,15 @@ Previous Releases:
                 const beforeCount = videoHistoryData.length;
                 videoHistoryData = videoHistoryData.filter(video => {
                     // Keep items that have url OR video_url (legacy) OR are currently processing
+                    // 🛡️ v2.12.19: Gemini images have initialImage instead of url
                     const hasValidUrl = (video.url && video.url.trim() !== '') ||
                                         (video.video_url && video.video_url.trim() !== '');
+                    const hasValidImage = video.initialImage && video.initialImage.length > 100;
                     const isProcessing = video.status === 'pending' || video.status === 'processing' || video.status === 'starting';
 
-                    if (!hasValidUrl && !isProcessing) {
-                        console.log(`🗑️ Auto-cleanup: Removing invalid item ${video.id} (no URL, status: ${video.status})`);
+                    // Keep items with valid URL OR valid image OR currently processing
+                    if (!hasValidUrl && !hasValidImage && !isProcessing) {
+                        console.log(`🗑️ Auto-cleanup: Removing invalid item ${video.id} (no URL/image, status: ${video.status})`);
                         return false;  // Remove this item
                     }
                     return true;  // Keep this item
