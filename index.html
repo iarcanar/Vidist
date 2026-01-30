@@ -7756,15 +7756,32 @@ Previous Releases:
                         item.provider !== 'gemini' || item.id === currentGeminiId
                     );
 
-                    // Keep only: current Gemini + all Grok + 5 others
+                    // 🔥 v2.12.20: Strip url from ALL items to reduce size
                     const currentGemini = historyForSaving.filter(h => h.id === currentGeminiId);
-                    const grokVideos = historyForSaving.filter(h => h.provider === 'grok');
-                    const others = historyForSaving.filter(h => h.provider !== 'gemini' && h.provider !== 'grok').slice(0, 5);
+                    let grokVideos = historyForSaving.filter(h => h.provider === 'grok');
+                    let others = historyForSaving.filter(h => h.provider !== 'gemini' && h.provider !== 'grok').slice(0, 5);
+
+                    // Strip url from Wavespeed items to reduce size
+                    others = others.map(item => {
+                        if (item.provider === 'wavespeed' && item.outputType === 'image' && item.initialImage) {
+                            const { url, ...itemWithoutUrl } = item;
+                            return itemWithoutUrl;
+                        }
+                        return item;
+                    });
 
                     videoHistoryData = [...currentGemini, ...grokVideos, ...others];
 
                     saveSuccess = safeSetLocalStorage('videoHistory', JSON.stringify(videoHistoryData));
-                    console.log(`🔥 Emergency cleanup: ${saveSuccess ? 'SUCCESS' : 'FAILED'}`);
+
+                    // 🚨 v2.12.20: If still failed, remove Wavespeed and keep only Grok + current Gemini
+                    if (!saveSuccess) {
+                        console.warn('⚠️ Still too large - keeping only Grok + current Gemini');
+                        videoHistoryData = [...currentGemini, ...grokVideos];
+                        saveSuccess = safeSetLocalStorage('videoHistory', JSON.stringify(videoHistoryData));
+                    }
+
+                    console.log(`🔥 Emergency cleanup: ${saveSuccess ? 'SUCCESS' : 'FAILED'} (${videoHistoryData.length} items)`);
                 }
 
                 renderVideoHistory();
@@ -9487,16 +9504,41 @@ Previous Releases:
                     // 🛡️ v2.12.14: Protect Grok videos during quota cleanup
                     const grokVideos = finalHistory.filter(h => h.provider === 'grok' && h.status === 'completed');
                     const otherVideos = finalHistory.filter(h => h.provider !== 'grok');
-                    const reducedHistory = [...grokVideos, ...otherVideos.slice(0, 10)];
+
+                    // 🔥 v2.12.20: Strip redundant url from Gemini to reduce size
+                    const otherVideosOptimized = otherVideos.map(item => {
+                        if (item.provider === 'gemini' && item.outputType === 'image' && item.initialImage) {
+                            const { url, ...itemWithoutUrl } = item;
+                            return itemWithoutUrl;
+                        }
+                        return item;
+                    });
+
+                    const reducedHistory = [...grokVideos, ...otherVideosOptimized.slice(0, 10)];
                     videoHistoryData = reducedHistory;
 
                     try {
                         localStorage.setItem('videoHistory', JSON.stringify(reducedHistory));
-                        console.log(`🛡️ Protected ${grokVideos.length} Grok videos, kept ${otherVideos.slice(0, 10).length} others`);
+                        console.log(`🛡️ Protected ${grokVideos.length} Grok videos, kept ${otherVideosOptimized.slice(0, 10).length} others`);
                     } catch (e2) {
-                        console.error('❌ Still quota error after cleanup - clearing history entirely');
-                        videoHistoryData = [];
-                        localStorage.setItem('videoHistory', JSON.stringify([]));
+                        // 🚨 v2.12.20: NEVER clear entirely - remove Gemini instead
+                        console.warn('⚠️ Still quota error - removing ALL Gemini images to preserve Grok videos');
+
+                        const grokOnly = reducedHistory.filter(h => h.provider === 'grok');
+                        const wavespeedOnly = reducedHistory.filter(h => h.provider === 'wavespeed').slice(0, 5);
+                        const finalReduced = [...grokOnly, ...wavespeedOnly];
+
+                        videoHistoryData = finalReduced;
+
+                        try {
+                            localStorage.setItem('videoHistory', JSON.stringify(finalReduced));
+                            console.log(`🛡️ EMERGENCY: Kept ${grokOnly.length} Grok + ${wavespeedOnly.length} Wavespeed (removed all Gemini)`);
+                        } catch (e3) {
+                            // Last resort: keep only Grok
+                            videoHistoryData = grokOnly;
+                            localStorage.setItem('videoHistory', JSON.stringify(grokOnly));
+                            console.error('🚨 CRITICAL: Kept only Grok videos, removed everything else');
+                        }
                     }
                 } else {
                     console.error('❌ localStorage error:', e);
