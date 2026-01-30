@@ -1354,12 +1354,62 @@ Previous Releases:
                                         <span>📥</span>
                                         <span>Export</span>
                                     </button>
+                                    <button
+                                        onclick="importHistory(); hideExportMenu()"
+                                        class="w-full px-4 py-2.5 text-left flex items-center gap-2 hover:bg-orange-500/10 transition-colors text-sm text-orange-400">
+                                        <span>📤</span>
+                                        <span>Import</span>
+                                    </button>
                                     <!-- Future menu items can be added here -->
                                 </div>
                             </div>
                         </div>
                     </div>
                     <!-- ========== END: Search/Filter/Export Controls ========== -->
+
+                    <!-- ========== ✨ NEW: Migration Banner ========== -->
+                    <div
+                        id="migration-banner"
+                        class="hidden mb-3 p-3 bg-gradient-to-r from-orange-500/20 to-pink-500/20 border border-orange-500/30 rounded-lg">
+                        <div class="flex items-start gap-2 mb-2">
+                            <span class="text-xl">🔄</span>
+                            <div class="flex-1">
+                                <h4 class="text-sm font-semibold text-orange-400 mb-1">
+                                    First time on GitHub Pages?
+                                </h4>
+                                <p class="text-xs text-gray-400 mb-2">
+                                    Your video history is stored locally. Export from your local version,
+                                    then import here to sync your data.
+                                </p>
+                            </div>
+                            <button
+                                onclick="dismissMigrationBanner()"
+                                class="text-gray-500 hover:text-white transition-colors text-sm">
+                                ✕
+                            </button>
+                        </div>
+                        <div class="flex gap-2">
+                            <button
+                                onclick="document.getElementById('import-file-input').click(); dismissMigrationBanner();"
+                                class="px-3 py-1.5 bg-orange-500 hover:bg-orange-600 rounded text-xs font-semibold text-white transition-all">
+                                Import Now
+                            </button>
+                            <button
+                                onclick="dismissMigrationBanner()"
+                                class="px-3 py-1.5 bg-gray-700 hover:bg-gray-600 rounded text-xs text-gray-300 transition-all">
+                                Maybe Later
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Hidden file input for import -->
+                    <input
+                        type="file"
+                        id="import-file-input"
+                        accept=".json"
+                        style="display: none;"
+                        onchange="handleImportFile(event)">
+                    <!-- ========== END: Migration Banner ========== -->
 
                     <div id="video-history"
                         class="space-y-3 max-h-[calc(100vh-100px)] overflow-y-auto custom-scrollbar pr-2">
@@ -4477,8 +4527,50 @@ Previous Releases:
                 console.error("❌ Error initializing Image Edit system:", e);
             }
 
+            // 🔄 Check if this is first time on GitHub Pages
+            try {
+                checkFirstTimeDeployment();
+            } catch (e) {
+                console.error("❌ Error checking first-time deployment:", e);
+            }
+
             // Ensure correct initial state for Wavespeed if it's the default
             // This is now handled within updateUIForModel/updateUIVisibility
+        }
+
+        /**
+         * Check if user is on GitHub Pages for the first time (empty localStorage)
+         */
+        function checkFirstTimeDeployment() {
+            // Only show on GitHub Pages domain
+            const isGitHubPages = window.location.hostname.includes('github.io');
+
+            // Check if localStorage is empty
+            const hasHistory = videoHistoryData && videoHistoryData.length > 0;
+
+            // Check if user already dismissed banner
+            const dismissed = localStorage.getItem('migration_banner_dismissed');
+
+            if (isGitHubPages && !hasHistory && !dismissed) {
+                // Show migration banner
+                const banner = document.getElementById('migration-banner');
+                if (banner) {
+                    banner.classList.remove('hidden');
+                    console.log('ℹ️ First-time GitHub Pages visit detected');
+                }
+            }
+        }
+
+        /**
+         * Dismiss migration banner
+         */
+        function dismissMigrationBanner() {
+            const banner = document.getElementById('migration-banner');
+            if (banner) {
+                banner.classList.add('hidden');
+            }
+            // Remember dismissal (don't show again)
+            localStorage.setItem('migration_banner_dismissed', 'true');
         }
 
         // --- Setup Event Listeners ---
@@ -9150,9 +9242,125 @@ Previous Releases:
             }
         }
 
+        /**
+         * Import history from JSON file
+         */
+        function importHistory() {
+            // Trigger hidden file input
+            document.getElementById('import-file-input').click();
+        }
+
+        /**
+         * Handle imported file
+         */
+        function handleImportFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            // Validate file type
+            if (!file.name.endsWith('.json')) {
+                alert('❌ Invalid file type. Please select a JSON file.');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const importedData = JSON.parse(e.target.result);
+
+                    // Validate structure
+                    if (!Array.isArray(importedData)) {
+                        throw new Error('Invalid format: Expected an array');
+                    }
+
+                    // Ask user: Replace or Merge?
+                    const action = confirm(
+                        `📦 Found ${importedData.length} videos\n\n` +
+                        `Current history: ${videoHistoryData.length} videos\n\n` +
+                        `Click OK to MERGE (skip duplicates)\n` +
+                        `Click Cancel to REPLACE ALL`
+                    );
+
+                    if (action) {
+                        // Merge mode
+                        mergeImportedHistory(importedData);
+                    } else {
+                        // Replace mode
+                        replaceImportedHistory(importedData);
+                    }
+
+                } catch (error) {
+                    console.error('Import failed:', error);
+                    alert(`❌ Import failed: ${error.message}`);
+                }
+            };
+
+            reader.readAsText(file);
+
+            // Reset file input for next import
+            event.target.value = '';
+        }
+
+        /**
+         * Merge imported history (skip duplicates)
+         */
+        function mergeImportedHistory(importedData) {
+            const existingIds = new Set(videoHistoryData.map(v => v.id));
+            const newVideos = importedData.filter(v => v.id && !existingIds.has(v.id));
+
+            if (newVideos.length === 0) {
+                alert('ℹ️ No new videos to import (all duplicates)');
+                return;
+            }
+
+            // Add new videos to the front
+            videoHistoryData = [...newVideos, ...videoHistoryData];
+
+            // Enforce 30 video limit
+            if (videoHistoryData.length > 30) {
+                videoHistoryData = videoHistoryData.slice(0, 30);
+                console.warn('⚠️ Trimmed to 30 videos (quota limit)');
+            }
+
+            // Save to localStorage
+            safeSetLocalStorage('videoHistory', videoHistoryData);
+
+            // Update UI
+            renderVideoHistory();
+
+            alert(`✅ Imported ${newVideos.length} new videos\n(${importedData.length - newVideos.length} duplicates skipped)`);
+            console.log(`✅ Merge complete: Added ${newVideos.length} videos`);
+        }
+
+        /**
+         * Replace all history with imported data
+         */
+        function replaceImportedHistory(importedData) {
+            // Enforce 30 video limit
+            if (importedData.length > 30) {
+                importedData = importedData.slice(0, 30);
+                console.warn('⚠️ Trimmed to 30 videos (quota limit)');
+            }
+
+            // Replace entire history
+            videoHistoryData = importedData;
+
+            // Save to localStorage
+            safeSetLocalStorage('videoHistory', videoHistoryData);
+
+            // Update UI
+            renderVideoHistory();
+
+            alert(`✅ Replaced all history with ${importedData.length} imported videos`);
+            console.log(`✅ Replace complete: ${importedData.length} videos`);
+        }
+
         // Make functions globally accessible
         window.applyHistorySearchFilter = applyHistorySearchFilter;
         window.exportHistory = exportHistory;
+        window.importHistory = importHistory;
+        window.handleImportFile = handleImportFile;
+        window.dismissMigrationBanner = dismissMigrationBanner;
         // ========== END: Search/Filter/Export Functions ==========
 
         // ========== ✨ NEW: Kebab Menu Toggle Functions ==========
