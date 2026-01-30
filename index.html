@@ -8471,12 +8471,34 @@ Previous Releases:
                         });
 
                         // Save to localStorage with validation
-                        const saveSuccess = safeSetLocalStorage('videoHistory', JSON.stringify(videoHistoryData));
+                        let saveSuccess = safeSetLocalStorage('videoHistory', JSON.stringify(videoHistoryData));
 
                         // 🔍 DEBUG: Log save result (v2.12.15)
                         console.log('💾 localStorage save:', saveSuccess ? 'SUCCESS' : 'FAILED');
 
-                        // Re-render
+                        // 🚨 EMERGENCY FIX (v2.12.16): If save fails due to quota, strip old initialImages
+                        if (!saveSuccess) {
+                            console.warn('⚠️ Save failed - attempting emergency cleanup of old initialImages...');
+
+                            // Keep only the current edited image's initialImage, remove from others
+                            const cleanedHistory = videoHistoryData.map((item, idx) => {
+                                if (idx === placeholderIndex) {
+                                    // Keep the current edited image
+                                    return item;
+                                } else if (item.initialImage && item.initialImage.length > 10000) {
+                                    // Remove large base64 images from old items
+                                    const { initialImage, ...itemWithoutImage } = item;
+                                    return itemWithoutImage;
+                                }
+                                return item;
+                            });
+
+                            videoHistoryData = cleanedHistory;
+                            saveSuccess = safeSetLocalStorage('videoHistory', JSON.stringify(videoHistoryData));
+                            console.log('🔄 After emergency cleanup:', saveSuccess ? 'SUCCESS' : 'STILL FAILED');
+                        }
+
+                        // Re-render (even if save failed, in-memory update is still there)
                         renderVideoHistory();
 
                         console.log('✅ Updated image edit placeholder:', currentEditPredictionId);
@@ -8512,7 +8534,25 @@ Previous Releases:
                         };
 
                         videoHistoryData.unshift(newItem);
-                        safeSetLocalStorage('videoHistory', JSON.stringify(videoHistoryData));
+                        let fallbackSaveSuccess = safeSetLocalStorage('videoHistory', JSON.stringify(videoHistoryData));
+
+                        // 🚨 EMERGENCY FIX (v2.12.16): If save fails, strip old initialImages
+                        if (!fallbackSaveSuccess) {
+                            console.warn('⚠️ Fallback save failed - attempting emergency cleanup...');
+                            const cleanedHistory = videoHistoryData.map((item, idx) => {
+                                if (idx === 0) {
+                                    return item; // Keep the new edited image
+                                } else if (item.initialImage && item.initialImage.length > 10000) {
+                                    const { initialImage, ...itemWithoutImage } = item;
+                                    return itemWithoutImage;
+                                }
+                                return item;
+                            });
+                            videoHistoryData = cleanedHistory;
+                            fallbackSaveSuccess = safeSetLocalStorage('videoHistory', JSON.stringify(videoHistoryData));
+                            console.log('🔄 After emergency cleanup:', fallbackSaveSuccess ? 'SUCCESS' : 'STILL FAILED');
+                        }
+
                         renderVideoHistory();
 
                         console.log('➕ Added image edit as new item (fallback)');
