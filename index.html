@@ -7734,57 +7734,39 @@ Previous Releases:
 
                 videoHistoryData.unshift(placeholderImageData);
 
-                // 🔥 v2.12.19: Strip redundant url field from Gemini to save space
-                let historyForSaving = videoHistoryData.map(item => {
-                    // For Gemini image edits: url is redundant (duplicate of initialImage)
-                    if (item.provider === 'gemini' && item.outputType === 'image' && item.initialImage) {
-                        const { url, ...itemWithoutUrl } = item;
-                        return itemWithoutUrl;  // 50% size reduction!
-                    }
-                    return item;  // Keep other items unchanged
-                });
-
-                let saveSuccess = safeSetLocalStorage('videoHistory', JSON.stringify(historyForSaving));
-                console.log(`💾 Gemini image size optimization: Stripped redundant url fields`);
-
-                // 🚨 v2.12.19: EMERGENCY FALLBACK - If still too large, remove old Gemini items
-                if (!saveSuccess && placeholderImageData.provider === 'gemini') {
-                    console.warn('⚠️ Gemini image too large, removing old Gemini items...');
-
-                    const currentGeminiId = placeholderImageData.id;
-                    historyForSaving = historyForSaving.filter(item =>
-                        item.provider !== 'gemini' || item.id === currentGeminiId
-                    );
-
-                    // 🔥 v2.12.20: Strip url from ALL items to reduce size
-                    const currentGemini = historyForSaving.filter(h => h.id === currentGeminiId);
-                    let grokVideos = historyForSaving.filter(h => h.provider === 'grok');
-                    let others = historyForSaving.filter(h => h.provider !== 'gemini' && h.provider !== 'grok').slice(0, 5);
-
-                    // Strip url from Wavespeed items to reduce size
-                    others = others.map(item => {
-                        if (item.provider === 'wavespeed' && item.outputType === 'image' && item.initialImage) {
-                            const { url, ...itemWithoutUrl } = item;
-                            return itemWithoutUrl;
-                        }
-                        return item;
-                    });
-
-                    videoHistoryData = [...currentGemini, ...grokVideos, ...others];
-
-                    saveSuccess = safeSetLocalStorage('videoHistory', JSON.stringify(videoHistoryData));
-
-                    // 🚨 v2.12.20: If still failed, remove Wavespeed and keep only Grok + current Gemini
-                    if (!saveSuccess) {
-                        console.warn('⚠️ Still too large - keeping only Grok + current Gemini');
-                        videoHistoryData = [...currentGemini, ...grokVideos];
-                        saveSuccess = safeSetLocalStorage('videoHistory', JSON.stringify(videoHistoryData));
-                    }
-
-                    console.log(`🔥 Emergency cleanup: ${saveSuccess ? 'SUCCESS' : 'FAILED'} (${videoHistoryData.length} items)`);
-                }
+                // 💾 v2.12.21: Save to localStorage (will be replaced with imgbb URL shortly)
+                safeSetLocalStorage('videoHistory', JSON.stringify(videoHistoryData));
 
                 renderVideoHistory();
+
+                // 🚀 v2.12.21: Upload to imgbb for permanent storage
+                try {
+                    console.log('📤 Uploading Gemini image to imgbb...');
+                    const imgbbUrl = await uploadImageToImgbb(fullBase64);
+                    console.log('✅ Gemini image uploaded:', imgbbUrl);
+
+                    // Update history item with permanent URL
+                    const geminiIndex = videoHistoryData.findIndex(v => v.id === pseudoId);
+                    if (geminiIndex !== -1) {
+                        videoHistoryData[geminiIndex].url = imgbbUrl;
+                        videoHistoryData[geminiIndex].imgbbUrl = imgbbUrl;
+                        // 🔥 Remove base64 to save space (imgbb URL is now the source)
+                        delete videoHistoryData[geminiIndex].initialImage;
+                        console.log('💾 Updated Gemini history with permanent imgbb URL (removed base64)');
+                    }
+
+                    // Save with permanent URL (tiny size!)
+                    safeSetLocalStorage('videoHistory', JSON.stringify(videoHistoryData));
+                    console.log('💾 Gemini history saved with imgbb URL (no quota issues!)');
+
+                    // 🔄 Re-render to show imgbb URL instead of base64
+                    renderVideoHistory();
+                    console.log('🔄 History re-rendered with imgbb URL');
+
+                } catch (uploadError) {
+                    console.warn('⚠️ imgbb upload failed, keeping base64 as fallback:', uploadError.message);
+                    // Base64 already saved above, just log the warning
+                }
 
                 // Handle completion
                 await handleImageEditCompleteGemini(fullBase64);
@@ -10282,10 +10264,11 @@ Previous Releases:
                     video.modelKey === 'ws-wan-26-image-edit';
                 // ========== END: Image Detection ==========
 
-                // For images: prefer initialImage (base64) which is always up-to-date
+                // 🚀 v2.12.21: For Gemini, prefer imgbb URL (permanent), fallback to base64
+                // For images: prefer imgbbUrl (permanent) > url > initialImage (base64)
                 // For videos: prefer cachedUrl or video.url
                 const videoUrl = isImage
-                    ? (video.initialImage || cachedUrl || video.url)
+                    ? (video.imgbbUrl || video.url || video.initialImage || cachedUrl)
                     : (cachedUrl || video.url);
 
                 // ตรวจสอบว่ามี URL หรือไม่

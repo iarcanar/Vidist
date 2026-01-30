@@ -7,7 +7,10 @@
       "Bash(git push:*)",
       "Bash(grep:*)",
       "Bash(cat:*)",
-      "Bash(git reset:*)"
+      "Bash(git reset:*)",
+      "Bash(curl:*)",
+      "WebFetch(domain:ai.google.dev)",
+      "WebFetch(domain:docs.x.ai)"
     ]
   },
   "customInstructions": "🚨 CRITICAL VERSION PROTOCOL FOR VIDIST:\n\nBEFORE EVERY COMMIT:\n1. If you modified index.html, you MUST also update js/version.js\n2. Increment patch number (e.g., 6 → 7)\n3. Add changelog entry to features array\n4. A pre-commit hook will BLOCK commits that violate this rule\n\nRead AI_DEVELOPMENT_PROTOCOL.md for full details.\n\nThis is NON-NEGOTIABLE. Never commit index.html changes without updating version.js."

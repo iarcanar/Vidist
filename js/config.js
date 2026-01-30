@@ -130,6 +130,50 @@ const MODEL_CONFIG = {
             '720p': 0.084,
             '1080p': 0.084  // Same price per second
         }
+    },
+    // Grok Imagine Video (x.ai)
+    "grok-imagine-video": {
+        provider: 'grok',
+        name: 'Grok Imagine Video',
+        internal_id: 'grok-imagine-video',
+        // Duration: 1-15 seconds (flexible range)
+        durationMode: 'range',
+        minDuration: 1,
+        maxDuration: 15,
+        // Resolution: 720p or 480p
+        maxResolution: "720p",
+        supportedResolutions: ["720p", "480p"],
+        supportsAudio: false,  // No audio support
+        features: ["i2v", "video-edit"],
+        supportsNegativePrompt: false,
+        supportsShotType: false,
+        supportsExpansion: false,
+        // Grok-specific features
+        aspectRatios: ["16:9", "4:3", "1:1", "9:16", "3:4", "3:2", "2:3"],
+        supportsVideoEdit: true,
+        maxEditDuration: 8.7,  // Max 8.7s input for editing
+        requiresPublicUrl: true,  // Must convert base64 to public URL
+        pricing: {
+            '720p': null,  // TBD
+            '480p': null   // TBD
+        }
+    },
+    // Grok Imagine Image Edit (x.ai)
+    "grok-imagine-image": {
+        provider: 'grok',
+        name: 'Grok Imagine Image',
+        internal_id: 'grok-imagine-image',
+        outputType: 'image',
+        features: ["image-edit"],
+        supportsNegativePrompt: false,
+        supportsExpansion: false,
+        // Grok-specific features
+        supportsBase64: true,  // Accepts data URI directly
+        aspectRatios: ["16:9", "9:16", "1:1", "4:3", "3:4", "3:2", "2:3", "4:5", "5:4", "21:9", "9:21"],
+        instantResponse: true,  // No polling required
+        pricing: {
+            'fixed': null  // TBD
+        }
     }
 };
 
