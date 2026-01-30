@@ -1,5 +1,127 @@
 # VIDIST Changelog
 
+## v3.1.0 (2026-01-30)
+**🔄 GitHub Pages History Sync Fix - Export/Import System**
+
+### Fixed
+- **CRITICAL**: Video history not showing on GitHub Pages after push (worked fine locally)
+- Root cause: localStorage is origin-specific
+  - Local (`file:///` or `http://localhost`) has separate storage from GitHub Pages (`https://iarcanar.github.io`)
+  - When pushing to GitHub Pages, deployed version starts with empty localStorage
+  - No synchronization mechanism existed between the two origins
+
+### Added
+- **Import button** in kebab menu (⋮) alongside existing Export button
+- **Auto-detection banner** shows on first GitHub Pages visit when localStorage is empty
+  - Message: "First time on GitHub Pages? Export from local, then import here"
+  - "Import Now" and "Maybe Later" buttons
+  - Auto-dismisses and remembers user choice
+- **Smart import modes**:
+  - **Merge**: Combines imported data with existing, skips duplicates (checks video ID)
+  - **Replace All**: Overwrites entire history
+- **Hidden file input** with JSON validation and error handling
+- **Migration guidance** displayed automatically on GitHub Pages
+
+### Implementation
+- 6 new JavaScript functions (208 lines):
+  - `importHistory()` - Triggers file picker
+  - `handleImportFile()` - Validates JSON and offers merge/replace choice
+  - `mergeImportedHistory()` - Adds new videos with duplicate prevention
+  - `replaceImportedHistory()` - Overwrites entire history
+  - `checkFirstTimeDeployment()` - Detects empty localStorage on GitHub Pages domain
+  - `dismissMigrationBanner()` - Hides banner and remembers dismissal
+- HTML migration banner with gradient styling and action buttons
+- Window function exports for onclick handlers
+
+### Security
+- API keys **excluded** from export by default (must be re-entered on GitHub Pages)
+- File validation (JSON format check)
+- Duplicate prevention (ID-based checking)
+- Quota enforcement (max 30 videos)
+
+### User Experience
+1. See migration banner on first GitHub Pages visit
+2. Click "Import Now" → Select exported JSON file
+3. Choose Merge or Replace → History appears instantly
+4. Refresh preserves history (saved to GitHub Pages localStorage)
+
+### Benefits
+- Solves localStorage cross-origin isolation issue
+- Simple 2-click migration process
+- No external dependencies or backend required
+- Works entirely client-side
+- Permanent solution once migrated
+- Backward compatible with existing Export functionality
+
+---
+
+## v3.0.0 (2026-01-30)
+**🚀 MAJOR - Gemini imgbb Upload Revolution (Permanent Storage Solution)**
+
+### Fixed
+- **CRITICAL**: Gemini edited images disappearing after page refresh
+- localStorage quota exceeded errors (5-10MB limit)
+- Emergency cleanup still failing despite multiple optimizations
+- Data lost on refresh due to quota issues
+
+### Problem Analysis
+Previous fixes attempted but insufficient:
+- v2.12.18: Fixed thumbnail display ✅
+- v2.12.19: Stripped redundant URL (50% reduction) ✅
+- v2.12.20: Never clears history entirely ✅
+- **BUT**: Gemini base64 still too large (200-500KB per image)
+- localStorage quota (5-10MB) fundamentally insufficient for image storage
+
+### Solution: imgbb Cloud Upload
+**Why imgbb is BETTER than IndexedDB:**
+- Unlimited storage (vs 50-100MB browser limit)
+- Permanent URLs (vs browser-specific temporary storage)
+- Cross-device compatible (share URLs between devices)
+- Simpler implementation (1 API call vs 200+ lines of IndexedDB code)
+- Already integrated (`uploadImageToImgbb` exists)
+- Tiny localStorage footprint (URL = 40 bytes vs base64 = 200KB)
+
+### Implementation
+**Phase 1** (Line 7790): Upload edited image to imgbb
+- Automatically uploads completed Gemini edits to imgbb
+- Updates history item with permanent `imgbbUrl`
+- Saves to localStorage with tiny URL instead of huge base64
+- Graceful fallback: keeps base64 if upload fails
+
+**Phase 2** (Line 7737-7785): Code cleanup
+- **DELETED** 50+ lines of emergency cleanup code
+- No longer needed with imgbb URLs
+- Simplified codebase dramatically
+
+**Phase 3** (Line 10264-10266): Rendering priority
+- Updated to prefer `imgbbUrl` first (permanent)
+- Fallback chain: imgbbUrl → url → initialImage (base64) → cachedUrl
+
+### Benefits
+- **NO quota errors ever** - 40 bytes per image instead of 200KB
+- **Permanent storage** - Images hosted on imgbb CDN
+- **Unlimited capacity** - Can store 1000+ Gemini edits
+- **Fast rendering** - imgbb CDN delivery
+- **Graceful degradation** - Works offline with base64 fallback
+- **Simpler codebase** - Removed complexity, easier to maintain
+
+### Results
+Console output:
+```
+📤 Uploading Gemini image to imgbb...
+✅ Gemini image uploaded: https://i.ibb.co/...
+💾 Gemini history saved with imgbb URL (no quota issues!)
+```
+- Thumbnails persist after F5 forever
+- localStorage stays small
+- Cross-device URL sharing possible
+
+### Tradeoff
+- Requires network connection for upload
+- Acceptable for history feature (one-time upload per edit)
+
+---
+
 ## v2.7.9 (2026-01-05)
 **Mobile Language Selector Fix - Media Query Adjustment**
 

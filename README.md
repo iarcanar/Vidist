@@ -1,6 +1,6 @@
-# VIDIST - แพลตฟอร์มสร้างวิดีโอด้วย AI (v2.8.9)
+# VIDIST - แพลตฟอร์มสร้างวิดีโอด้วย AI (v3.1.0)
 
-**VIDIST** คือเว็บแอปพลิเคชันสำหรับสร้างวิดีโอด้วย AI ที่เน้นความสวยงามในสไตล์ Cyberpunk และรองรับโมเดลวิดีโอที่ทันสมัยที่สุดในปัจจุบันผ่าน Wavespeed API และ Gemini 2.0 Flash
+**VIDIST** คือเว็บแอปพลิเคชันสำหรับสร้างวิดีโอด้วย AI ที่เน้นความสวยงามในสไตล์ Cyberpunk และรองรับโมเดลวิดีโอที่ทันสมัยที่สุดในปัจจุบันผ่าน Wavespeed API, Gemini 2.0 Flash และ Grok (x.ai)
 
 ---
 
@@ -8,9 +8,14 @@
 
 **Access VIDIST online:** https://iarcanar.github.io/Vidist/
 
-**หมายเหตุ:**
+**หมายเหตุสำคัญ:**
 - API keys จะถูกเก็บแยกตาม domain (localStorage)
-- ต้องใส่ Wavespeed และ Gemini API keys ใหม่เมื่อใช้ครั้งแรก
+- ต้องใส่ Wavespeed, Gemini, Grok และ imgbb API keys ใหม่เมื่อใช้ครั้งแรก
+- **🔄 การ Sync ประวัติจาก Local → GitHub Pages:**
+  1. เปิดโปรเจ็คใน Local → คลิก **⋮** → **Export** → บันทึกเป็น JSON
+  2. เปิด https://iarcanar.github.io/Vidist/ → คลิก **Import Now** → เลือกไฟล์ JSON
+  3. เลือก **Merge** (รวมไม่ซ้ำ) หรือ **Replace All** (แทนที่ทั้งหมด)
+  4. ✅ ประวัติจะแสดงครบ และยังคงอยู่หลัง Refresh!
 - รองรับ Mobile browsers อย่างสมบูรณ์ด้วย responsive UI (Android/iOS)
 - ทำงานได้ดีบน Chrome, Safari, Firefox, Edge
 
@@ -18,19 +23,26 @@
 
 ## ✨ ฟีเจอร์เด่น
 
+- 🔄 **Export/Import History** (v3.1.0): Sync ประวัติระหว่าง Local และ GitHub Pages ได้แล้ว!
+  - Export ประวัติเป็น JSON จาก Local
+  - Import บน GitHub Pages ด้วย 1 คลิก
+  - แบนเนอร์ auto-detect แนะนำการ migrate
+  - Merge (ไม่ซ้ำ) หรือ Replace All
 - 💖 **Keep: Prompt Collection**: บันทึก Prompt ที่ชอบ (Grid 3 คอลัมน์, Copy/Reuse/Delete, auto-save, ตรวจจับซ้ำ, 3-line preview)
-- 🎞️ **โมเดลวิดีโอหลากหลาย**: รองรับ Wan 2.5, Wan 2.6 และ Kling Video O1
+- 🎞️ **โมเดลวิดีโอหลากหลาย**: รองรับ Wavespeed (Wan 2.5, Wan 2.6), Kling Video O1 และ Grok (x.ai)
 - 🎭 **โหมดสร้างสรรค์**:
   - **T2V (Text-to-Video)**: สร้างวิดีโอจากข้อความ (รองรับ Wan 2.5)
   - **I2V (Image-to-Video)**: สร้างวิดีโอจากรูปภาพ (รองรับทุกโมเดล)
   - **Video Extend**: ต่อความยาววิดีโอเดิมด้วย AI
 - 🧠 **AI Prompt Craft**: ระบบช่วยแต่ง Prompt ให้สวยงามและสมจริงด้วย Gemini 2.0 Flash
-- 📥 **ระบบบันทึกวิดีโอ (3-Tier Cache)**: เก็บไว้ใน Browser (LRU + IndexedDB) ไม่หายเวลา Refresh
+- 🖼️ **Image Edit**: แก้ไขรูปภาพด้วย Gemini 2.5 Flash หรือ WAN 2.6 (imgbb permanent storage)
+- 📥 **ระบบบันทึกวิดีโอ (Multi-Layer Storage)**: LRU Cache + IndexedDB + imgbb (permanent URLs)
 - ⚡ **Red Mode + Intensity Levels**: โหมดพิเศษ 4 ระดับ (I, II, III, Grok)
 - 🎤 **Custom Dialog Override**: กำหนด Dialog & Sound Effect เอง
 - 📋 **Clipboard Paste (Ctrl+V)**: วางภาพจาก Clipboard
 - 📱 **Mobile-Optimized UI**: Responsive design ที่ทำงานสมบูรณ์บนมือถือทุกขนาด
 - 🔍 **Advanced History Search**: ค้นหาโดยข้อความ, ความละเอียด (480p/720p/1080p), ระยะเวลา (3s/5s/10s), ประเภท (image/video/edit)
+- 🗑️ **Delete Videos**: ลบประวัติออกจากทั้ง localStorage และ Wavespeed server
 - 🔄 **Version Auto-Update**: ระบบ CI/CD อัตโนมัติ
 
 ---
@@ -65,59 +77,80 @@
 - คลิก Thumbnail เพื่อดูแบบเต็มจอ
 - ปุ่ม **Download** เพื่อเซฟวิดีโอ
 - ปุ่ม **Hide** เพื่อซ่อนเนื้อหา (sensitive content)
-- ปุ่ม **Delete** เพื่อลบออก
+- ปุ่ม **Delete** เพื่อลบออกจากทั้ง localStorage และ server
 - 🔍 **ระบบ Filter & Search**:
   - ค้นหาโดยข้อความ: "cat", "sunset"
   - ค้นหาโดย Resolution: "480", "480p", "720p", "1080p"
   - ค้นหาโดย Duration: "3s", "5s", "10s"
   - ค้นหาโดย Type: "image", "video", "edit"
+- 📤 **Export/Import** (เมนู **⋮**):
+  - **Export**: บันทึกประวัติเป็นไฟล์ JSON (สำหรับ backup หรือ migrate)
+  - **Import**: นำเข้าประวัติจากไฟล์ JSON
+  - **Merge Mode**: รวมประวัติไม่ซ้ำกัน (ตรวจสอบด้วย video ID)
+  - **Replace Mode**: แทนที่ประวัติทั้งหมด
+  - **Use Case**: Sync ประวัติจาก Local → GitHub Pages
 
 ---
 
 ## 💾 ระบบการเก็บข้อมูล (Storage)
 
-1. **Memory Cache**: เก็บวิดีโอล่าสุดในแรม
-2. **IndexedDB**: บันทึกวิดีโอลงเครื่อง
-3. **Auto-Clean**: ล้างไฟล์เก่า 24 ชั่วโมงโดยอัตโนมัติ
+### Local Storage (Browser)
+1. **localStorage**: เก็บประวัติวิดีโอ, API keys, settings (แยกตาม origin/domain)
+2. **Memory Cache (LRU)**: เก็บวิดีโอล่าสุดในแรม (ไม่เกิน 200MB)
+3. **IndexedDB**: บันทึกวิดีโอลงเครื่อง (Grok videos มี bulletproof persistence)
+4. **Auto-Clean**: ล้างไฟล์เก่า 24 ชั่วโมงโดยอัตโนมัติ
+
+### Cloud Storage (Permanent)
+- **imgbb**: เก็บรูปภาพที่แก้ไขด้วย Gemini แบบถาวร (unlimited storage)
+- **Wavespeed Server**: เก็บวิดีโอที่สร้างด้วย Wavespeed API
+- **Grok Server**: เก็บวิดีโอที่สร้างด้วย Grok API
+
+### ⚠️ สำคัญ: localStorage แยกตาม Domain
+- **Local**: `file:///` หรือ `http://localhost` มี localStorage ของตัวเอง
+- **GitHub Pages**: `https://iarcanar.github.io` มี localStorage **คนละตัว**
+- **วิธีแก้**: ใช้ Export/Import เพื่อ sync ประวัติระหว่าง 2 domain (ทำครั้งเดียว)
 
 ---
 
 ## 📄 ข้อมูลทางเทคนิค
 
 - **Frontend**: HTML5, CSS3, Vanilla JavaScript (No framework)
-- **API**: Wavespeed API V3, Gemini 2.0 Flash
-- **Deployment**: GitHub Pages
-- **Current Version**: v2.8.9 (Build git01062026)
+- **API**: Wavespeed API V3, Gemini 2.0 Flash, Grok (x.ai), imgbb
+- **Deployment**: GitHub Pages (CI/CD with GitHub Actions)
+- **Current Version**: v3.1.0 (Build 01302026)
 
-### Latest Updates (v2.8.9)
-- ✨ Box-Shadow Containment - Fixed shadow/glow overflow on mobile floating image
-- 📱 Mobile Hologram Fix - Perfect fit with overflow:hidden boundary
-- 🔇 Silent Auto-Cleanup - Removed storage quota alerts, aggressive cleanup
-- 🔧 Display Override Fix - Fixed .hidden class specificity issue
-- ✨ Equal Size Scaling - Both base and floating images same 238px size
-- 🔧 Positioning Fix - Fixed floating container overlay position
-- 🔧 Syntax Fix - Removed duplicate const declaration
-- ✨ Floating Processing Visual - Floating scaled image with hologram during Image Edit
+### Latest Updates (v3.1.0) - January 30, 2026
+- 🔄 **GitHub Pages History Sync Fix** (CRITICAL)
+  - แก้ปัญหาประวัติวิดีโอไม่แสดงบน GitHub Pages
+  - เพิ่มปุ่ม **Import** ในเมนู kebab (⋮)
+  - แบนเนอร์ auto-detect การเข้า GitHub Pages ครั้งแรก
+  - Smart import: Merge (ไม่ซ้ำ) หรือ Replace All
+  - แก้ปัญหา localStorage cross-origin isolation
+  - One-time migration: Export จาก Local → Import บน GitHub Pages
+  - 208 บรรทัดเพิ่ม (6 ฟังก์ชัน + HTML banner)
 
-### Recent Updates (v2.8.0 - v2.8.1)
-- 🔧 Image Edit Navigation Fix (v2.8.1) - Fixed Previous/Next + Edit bug
-- 📱 Mobile UX Complete (v2.8.0) - Two-tap interactions, custom dialogs, video tap controls
+### Major Updates (v3.0.0) - January 30, 2026
+- 🚀 **Gemini imgbb Upload Revolution**
+  - รูปภาพที่แก้ไขด้วย Gemini ถูก upload ไปที่ imgbb อัตโนมัติ
+  - เก็บแบบถาวร (permanent URLs) แทน base64 ใน localStorage
+  - ไม่มี quota errors อีกต่อไป (40 bytes URL vs 200KB base64)
+  - รองรับ 1000+ Gemini edits
+  - Graceful fallback (ใช้ base64 ถ้า upload ล้มเหลว)
 
-### Previous Updates (v2.7.6 - v2.7.9)
-- 📱 Mobile Language Selector Fix (v2.7.9) - 768px media query for all devices
-- 📱 Mobile Language Selector (v2.7.8) - EN/TH/JA as 3 columns
-- 🔧 Mobile CSS Fix (v2.7.7) - History hide button specificity issue
-- 🎬 Video UI Enhancement (v2.7.6) - Hover delete button + drag & drop replace
+### Grok Integration (v2.12.0 - v2.12.20)
+- 🎬 **Grok API (x.ai)**: I2V + Image Edit + Files API
+- 💾 **Bulletproof Persistence**: IndexedDB backup, zero data loss
+- 🎬 **Modal Playback**: CORS bypass, blob download
+- 🚫 **Content Filter Detection**: หยุด polling ทันทีเพื่อประหยัดเงิน
 
 ### Version History
-- **v2.7.5**: Enhanced History Search & Kebab Menu
-- **v2.7.4**: Delete Button (Image/Video/Processing cards)
-- **v2.7.3**: Header Redesign - Mobile-First Responsive
-- **v2.7.2**: Complete History Management System
-- **v2.7.1**: History Prompt Persistence Fix
-- **v2.7.0**: Credit Balance Redesign
+- **v3.1.0**: Export/Import History (GitHub Pages sync fix)
+- **v3.0.0**: Gemini imgbb Upload Revolution
+- **v2.12.x**: Grok API Integration + Bulletproof Persistence
+- **v2.8.x**: Mobile UX Polish + Image Edit Floating Visual
+- **v2.7.x**: History Management System + Search/Filter
 
-**Last Updated**: January 6, 2026
+**Last Updated**: January 30, 2026
 
 ---
 
@@ -155,15 +188,29 @@ Rules:
 
 ## 🐛 ปัญหาที่แก้ไขล่าสุด
 
-### v2.7.9 - Mobile Language Selector Fix
-- **ปัญหา**: Language buttons (EN/TH/JA) แสดงเป็น 3 แถวบนมือถือ
-- **แก้ไข**: Moved CSS fix to 768px media query (from 480px)
-- **ผลลัพธ์**: ปุ่มแสดงเป็น 1 แถว 3 ปุ่ม บนมือถือทั้งหมด
+### v3.1.0 - GitHub Pages History Sync Fix
+- **ปัญหา**: ประวัติวิดีโอไม่แสดงบน GitHub Pages หลัง push (แต่ใน Local ทำงานปกติ)
+- **สาเหตุ**: localStorage เก็บข้อมูลแยกตาม origin
+  - Local: `file:///` มี localStorage ของตัวเอง
+  - GitHub Pages: `https://iarcanar.github.io` มี localStorage **คนละตัว**
+  - เมื่อ push → GitHub Pages เริ่มต้นด้วย localStorage ว่างเปล่า
+- **แก้ไข**: เพิ่มระบบ Export/Import
+  - ปุ่ม Import ในเมนู kebab (⋮)
+  - แบนเนอร์ auto-detect เมื่อเข้า GitHub Pages ครั้งแรก
+  - Smart import: Merge (ไม่ซ้ำ) หรือ Replace All
+  - 6 ฟังก์ชันใหม่ + HTML banner (208 บรรทัด)
+- **ผลลัพธ์**: Export จาก Local → Import บน GitHub Pages → ประวัติแสดงครบ!
 
-### v2.7.7 - Mobile History Hide Button
-- **ปัญหา**: ปุ่ม Hide ไม่ทำงาน เพราะ CSS specificity issue
-- **แก้ไข**: Added `#video-history.hidden { display: none !important; }`
-- **สาเหตุ**: ID selector (#video-history) มี specificity สูงกว่า .hidden class
+### v3.0.0 - Gemini Image Storage Quota Fix
+- **ปัญหา**: รูปภาพที่แก้ไขด้วย Gemini หายหลัง F5 (localStorage quota exceeded)
+- **สาเหตุ**: base64 ใหญ่มาก (200-500KB ต่อรูป) เกิน quota 5-10MB
+- **แก้ไข**: Upload ไปที่ imgbb แทน → เก็บแค่ URL (40 bytes)
+- **ผลลัพธ์**: รูป 1000+ รูปก็ไม่เกิน quota, permanent storage, ไม่หายอีกเลย
+
+### v2.12.14 - Grok Video Data Loss
+- **ปัญหา**: วิดีโอ Grok หาย (แม้สร้างสำเร็จแล้ว) - ห้ามให้หายเพราะเสียเงิน!
+- **แก้ไข**: 5-Layer Defense - IndexedDB backup, metadata store, auto-recovery
+- **ผลลัพธ์**: Zero data loss, Grok videos ไม่หายแม้แต่อันเดียว
 
 ---
 
