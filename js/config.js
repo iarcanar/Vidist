@@ -80,6 +80,35 @@ const MODEL_CONFIG = {
             '1080p': 0.15
         }
     },
+    // Wan 2.6 Flash Image-to-Video
+    "ws-wan-26-flash": {
+        provider: 'wavespeed',
+        name: 'Wan 2.6 Flash',
+        internal_id: 'alibaba/wan-2.6/image-to-video-flash',
+        outputType: 'video',
+        features: ['i2v'],
+        // Duration Configuration: 3-15 วินาที (ละเอียด)
+        durationMode: 'range',
+        minDuration: 3,
+        maxDuration: 15,
+        // Resolution Support
+        maxResolution: "1080p",
+        supportedResolutions: ["720p", "1080p"],
+        // Feature Flags
+        supportsAudio: true,
+        supportsNegativePrompt: true,
+        supportsShotType: true,
+        supportsExpansion: true,
+        // Pricing (per second, base without audio)
+        // WITHOUT Audio: 720p=$0.025/s, 1080p=$0.0375/s
+        // WITH Audio (×2): 720p=$0.05/s, 1080p=$0.075/s
+        // Examples @ 720p: 3s no-audio=$0.075, 3s with-audio=$0.15
+        //                  15s no-audio=$0.375, 15s with-audio=$0.75
+        pricing: {
+            '720p': 0.025,      // $0.025 per second (base, no audio)
+            '1080p': 0.0375     // $0.0375 per second (1.5x, no audio)
+        }
+    },
     // Wan 2.6 Image Edit
     "ws-wan-26-image-edit": {
         provider: 'wavespeed',

@@ -1136,6 +1136,20 @@ Previous Releases:
                             </select>
                         </div>
 
+                        <!-- Audio Toggle (Wan 2.6 Flash only) -->
+                        <div id="wan-flash-audio-section" class="hidden flex-1">
+                            <label
+                                class="block text-xs font-semibold text-gray-400 mb-2 uppercase tracking-wide">Audio</label>
+                            <div class="flex items-center justify-center h-[46px] px-4 rounded-xl border border-purple-500/30 bg-purple-500/10">
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" id="wan-flash-audio-enabled"
+                                        class="w-4 h-4 rounded border-purple-500/50 bg-gray-900/50 checked:bg-purple-500 checked:border-purple-500 focus:ring-2 focus:ring-purple-500/50 cursor-pointer"
+                                        checked>
+                                    <span class="text-sm font-semibold text-purple-300">Enable Audio (×2 cost)</span>
+                                </label>
+                            </div>
+                        </div>
+
                         <!-- Cost Display (Compact) -->
                         <div id="wavespeed-cost-section" class="hidden flex-1">
                             <label
@@ -1340,7 +1354,7 @@ Previous Releases:
                                     id="export-menu-btn"
                                     onclick="toggleExportMenu()"
                                     title="More Options"
-                                    class="px-3 py-1.5 bg-gradient-to-r from-orange-500/20 to-pink-500/20 hover:from-orange-500/30 hover:to-pink-500/30 border border-orange-500/30 rounded-lg transition-all text-xs font-semibold text-orange-400 whitespace-nowrap">
+                                    class="px-2 py-1.5 bg-gray-900/50 hover:bg-gray-700/50 border border-gray-500/30 rounded-lg transition-all text-xs text-gray-400 hover:text-gray-300">
                                     ⋮
                                 </button>
 
@@ -2864,8 +2878,9 @@ Previous Releases:
                     throw new Error(`Save failed: Only ${successCount}/3 layers succeeded`);
                 }
 
-                // 6. Re-render history
-                renderVideoHistory();
+                // 6. Re-render history (force critical to ensure thumbnail displays)
+                renderVideoHistory(true);
+                console.log('🔄 Forcing critical render after Grok video completion');
 
                 // 7. Log success
                 console.log('💾 GROK SAVE SUCCESS:', {
@@ -4765,6 +4780,12 @@ Previous Releases:
 
             resolutionSelect.addEventListener('change', calculateWavespeedCost); // Cost recalculates on change
 
+            // Audio Checkbox Listener (Wan 2.6 Flash)
+            const audioCheckbox = document.getElementById('wan-flash-audio-enabled');
+            if (audioCheckbox) {
+                audioCheckbox.addEventListener('change', calculateWavespeedCost); // Cost recalculates on change
+            }
+
             generateBtn.addEventListener('click', handleGenerateSubmit);
             cancelGenerationBtn.addEventListener('click', cancelGeneration);
 
@@ -5589,6 +5610,13 @@ Previous Releases:
                 lastImageSection.classList.toggle('hidden', !config.supportsLastImage);
             }
 
+            // Show/Hide Wan Flash Audio Checkbox (Wan 2.6 Flash Only)
+            const wanFlashAudioSection = document.getElementById('wan-flash-audio-section');
+            if (wanFlashAudioSection) {
+                const isWanFlash = selectedModelValue === 'ws-wan-26-flash';
+                wanFlashAudioSection.classList.toggle('hidden', !isWanFlash);
+            }
+
             calculateWavespeedCost(); // Recalculate cost
         }
         // ========== END: แก้ไขฟังก์ชันนี้ ==========
@@ -5663,7 +5691,22 @@ Previous Releases:
             const duration = parseInt(durationSelectWavespeed.value);
             const resolution = resolutionSelect.value;
             const rate = config.pricing[resolution];
-            if (rate && duration) { wavespeedCost.textContent = `$${(rate * duration).toFixed(2)}`; }
+            if (rate && duration) {
+                let cost = rate * duration;
+
+                // Apply audio multiplier (2×) for Wan 2.6 Flash
+                const selectedModel = modelSelect.value;
+                if (selectedModel === 'ws-wan-26-flash') {
+                    const audioCheckbox = document.getElementById('wan-flash-audio-enabled');
+                    const audioEnabled = audioCheckbox ? audioCheckbox.checked : true;
+
+                    if (audioEnabled) {
+                        cost *= 2;  // Audio multiplier
+                    }
+                }
+
+                wavespeedCost.textContent = `$${cost.toFixed(2)}`;
+            }
             else { wavespeedCost.textContent = '$?.??'; }
         }
 
@@ -6553,6 +6596,14 @@ Previous Releases:
             if (config.supportsShotType && shotType) payload.shotType = shotType;
             if (config.supportsExpansion) payload.promptExpansion = promptExpansion;
 
+            // Audio toggle (Wan 2.6 Flash only)
+            const selectedModel = modelSelect.value;
+            if (selectedModel === 'ws-wan-26-flash') {
+                const audioCheckbox = document.getElementById('wan-flash-audio-enabled');
+                const audioEnabled = audioCheckbox ? audioCheckbox.checked : true;
+                payload.enable_audio = audioEnabled;
+            }
+
             // Convert to API format before sending
             const body = {
                 prompt: payload.prompt,
@@ -6568,6 +6619,7 @@ Previous Releases:
             if (payload.audioUrl) body.audio = payload.audioUrl;
             if (payload.shotType) body.shot_type = payload.shotType;
             if (payload.promptExpansion !== undefined) body.enable_prompt_expansion = !!payload.promptExpansion;
+            if (payload.hasOwnProperty('enable_audio')) body.enable_audio = payload.enable_audio;
 
             const WAVESPEED_GENERATE_ENDPOINT = `${WAVESPEED_API_BASE_URL}/${config.internal_id}`;
 
@@ -9771,7 +9823,9 @@ Previous Releases:
                 safeSetLocalStorage('videoHistory', JSON.stringify(videoHistoryData));
 
                 // ✨ v2.8.14: Always call renderVideoHistory() to ensure UI updates
-                renderVideoHistory();
+                // ✨ Force critical render to ensure thumbnail displays immediately
+                renderVideoHistory(true);
+                console.log('🔄 Forcing critical render after video completion');
 
                 console.log(`✅ Added new to history (${videoHistoryData.length}/${STORAGE_LIMITS.VIDEO_HISTORY_MAX})`);
             }
@@ -10281,10 +10335,10 @@ Previous Releases:
         }
 
         // ========== START: แก้ไขฟังก์ชันนี้ (เพิ่ม Fallbacks และ Error Handling) ==========
-        async function renderVideoHistory() {
+        async function renderVideoHistory(forceCritical = false) {
             // ========== ✨ NEW: Increment FIRST to track all calls (Race Condition Fix) ==========
             const currentRenderingId = ++renderingId;
-            console.log(`🎬 Starting render #${currentRenderingId}`);
+            console.log(`🎬 Starting render #${currentRenderingId}${forceCritical ? ' [CRITICAL]' : ''}`);
             // ========== END: Rendering ID ==========
 
             // ✨ NEW: Get filtered history based on current filter mode
@@ -10327,11 +10381,11 @@ Previous Releases:
             console.log('✅ Pre-loading completed');
 
             // ========== ✨ CHECKPOINT 1 - Cancel if newer render started (Race Condition Fix) ==========
-            if (currentRenderingId !== renderingId) {
+            if (!forceCritical && currentRenderingId !== renderingId) {
                 console.log(`🚫 Render #${currentRenderingId} cancelled after pre-load (current: #${renderingId})`);
                 return; // Exit early, don't update state or DOM
             }
-            console.log(`✅ Render #${currentRenderingId} still current after pre-load`);
+            console.log(`✅ Render #${currentRenderingId} still current after pre-load${forceCritical ? ' [CRITICAL - bypassed checkpoint]' : ''}`);
             // ========== END: CHECKPOINT 1 ==========
 
             // ========== Separate processing and completed videos ==========
@@ -10363,11 +10417,11 @@ Previous Releases:
             }
 
             // ========== ✨ CHECKPOINT 2 - Cancel before DOM update (Race Condition Fix) ==========
-            if (currentRenderingId !== renderingId) {
+            if (!forceCritical && currentRenderingId !== renderingId) {
                 console.log(`🚫 Render #${currentRenderingId} cancelled before DOM update (current: #${renderingId})`);
                 return; // Exit early, don't render DOM
             }
-            console.log(`✅ Render #${currentRenderingId} proceeding to DOM update`);
+            console.log(`✅ Render #${currentRenderingId} proceeding to DOM update${forceCritical ? ' [CRITICAL - bypassed checkpoint]' : ''}`);
             // ========== END: CHECKPOINT 2 ==========
 
             // Get current view mode and set grid class accordingly
