@@ -1,5 +1,49 @@
 # VIDIST Changelog
 
+## v3.3.0 (2026-02-01)
+**✨ Grok Image Edit Support - Complete Integration**
+
+### Added
+- **Grok Imagine Image** as image editing provider (alongside Gemini 2.5 Flash and WAN 2.6)
+- Full integration with existing image edit workflow:
+  - Floating processing UI with progress bar
+  - Edit history support (Original ↔ Edited navigation)
+  - imgbb permanent storage for edited images
+  - Auto-save compatibility
+  - Video history panel integration
+
+### Fixed
+- **CRITICAL**: Grok API image edit endpoint requiring specific format
+  - Fixed: API expects `image: { url: '...' }` (object) not string
+  - Fixed: API requires public URL (imgbb) not data URI
+  - Solution: Upload source image to imgbb before sending to Grok API
+- **CORS issue**: Grok image URLs don't have proper CORS headers
+  - Solution: Use `img.crossOrigin` + canvas extraction instead of fetch()
+  - Fallback: Display image URL directly if canvas fails
+- **Missing edit history**: Original image not preserved
+  - Solution: Add original to edit history before editing (same pattern as Gemini/WAN)
+
+### Implementation
+- Modified `editImage_Grok()` function:
+  - Added imgbb upload for source image
+  - Payload format: `{ model, image: { url: publicUrl }, prompt }`
+  - Floating UI + progress simulation
+  - Edit history integration
+- Modified `handleImageEditCompleteGrok()`:
+  - Multi-layered image download approach (img + canvas)
+  - imgbb upload for permanent storage
+  - UI update with fade animation
+  - Edit history tracking
+- Total changes: ~150 lines modified/added
+
+### Technical Details
+- imgbb API key required (same as video generation)
+- Cost: $0.022 per edit (instant response, no polling)
+- Supports base64 extraction or URL fallback
+- Complete parity with Gemini/WAN providers
+
+---
+
 ## v3.1.0 (2026-01-30)
 **🔄 GitHub Pages History Sync Fix - Export/Import System**
 

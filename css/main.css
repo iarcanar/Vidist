@@ -1538,3 +1538,45 @@ input[value="img"] + div:hover {
     min-height: 44px;
     min-width: 44px;
 }
+
+/* ========== Grok Balance Display ========== */
+.balance-display-grok {
+    min-height: 44px; /* Touch target minimum */
+    position: relative;
+    overflow: visible; /* Allow edit icon to overflow */
+}
+
+.balance-display-grok:hover {
+    transform: translateY(-1px);
+}
+
+/* Purple/Pink Neon Text for Grok */
+.neon-text-purple {
+    text-shadow: 0 0 5px rgba(168, 85, 247, 0.8),
+                 0 0 10px rgba(236, 72, 153, 0.6),
+                 0 0 20px rgba(168, 85, 247, 0.4),
+                 0 0 40px rgba(236, 72, 153, 0.2);
+}
+
+/* Editable Balance Styling */
+#grok_balance[contenteditable="true"]:focus {
+    outline: 2px solid rgba(168, 85, 247, 0.5);
+    outline-offset: 2px;
+    border-radius: 4px;
+    background: rgba(168, 85, 247, 0.1);
+}
+
+#grok_balance[contenteditable="true"]:empty:before {
+    content: attr(data-placeholder);
+    color: rgba(255, 255, 255, 0.4);
+}
+
+/* Prevent text selection when not editing */
+.balance-display-grok:not(:focus-within) {
+    user-select: none;
+}
+
+/* Low Balance Warning */
+.balance-display-grok.low-balance {
+    border-color: rgba(248, 113, 113, 0.7) !important; /* red-400/70 */
+}

@@ -102,26 +102,72 @@ Previous Releases:
                     </div>
                 </div>
 
-                <!-- Right: Compact Balance + Top Up Button -->
-                <a href="https://wavespeed.ai/top-up" target="_blank"
-                   class="balance-topup-button w-[75px] sm:w-auto sm:min-w-[120px] px-2 py-1.5 sm:px-4 sm:py-2.5 rounded-lg sm:rounded-xl
-                          bg-gradient-to-r from-cyan-600 to-cyan-700 hover:from-cyan-500 hover:to-cyan-600
-                          border-2 border-cyan-400/50 hover:border-cyan-300
-                          transition-all duration-200 transform hover:scale-105
-                          shadow-lg hover:shadow-cyan-500/50
-                          flex flex-col items-center justify-center gap-0.5
-                          cursor-pointer touch-target flex-shrink-0">
+                <!-- Right: Balance Container (Grok + Wavespeed) -->
+                <div class="flex flex-row items-center gap-2 sm:gap-3">
 
-                    <!-- Balance Amount -->
-                    <span class="text-xs sm:text-xl font-bold text-white neon-text-cyan leading-none whitespace-nowrap" id="credit_balance">
-                        $-.---
-                    </span>
+                    <!-- 1️⃣ Grok Balance (Manual Input + Auto-deduct) -->
+                    <div class="balance-display-grok w-[70px] sm:w-auto sm:min-w-[110px] px-2 py-1.5 sm:px-4 sm:py-2.5 rounded-lg sm:rounded-xl
+                                bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500
+                                border-2 border-purple-400/50 hover:border-purple-300
+                                transition-all duration-200
+                                shadow-lg hover:shadow-purple-500/50
+                                flex flex-col items-center justify-center gap-0.5
+                                touch-target flex-shrink-0 relative group cursor-pointer"
+                         onclick="document.getElementById('grok_balance').focus()">
 
-                    <!-- TOP UP Label -->
-                    <span class="text-[7px] sm:text-[10px] text-cyan-100 font-semibold uppercase tracking-wider whitespace-nowrap">
-                        TOP UP
-                    </span>
-                </a>
+                        <!-- Grok Logo (top-left corner) -->
+                        <img src="assets/grok.png" alt="Grok"
+                             class="absolute top-1 left-1 w-3 h-3 sm:w-4 sm:h-4 opacity-60">
+
+                        <!-- Editable Balance -->
+                        <div class="relative w-full">
+                            <span class="text-xs sm:text-xl font-bold text-white neon-text-purple leading-none whitespace-nowrap text-center block"
+                                  id="grok_balance"
+                                  contenteditable="true"
+                                  aria-label="Grok balance, editable"
+                                  role="textbox"
+                                  data-placeholder="$0.000">
+                                $0.000
+                            </span>
+                            <!-- Edit Icon (appears on hover, desktop only) -->
+                            <svg class="absolute -right-4 top-1/2 -translate-y-1/2 w-3 h-3 text-purple-300 opacity-0 group-hover:opacity-100 transition-opacity hidden sm:block"
+                                 fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                      d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+                            </svg>
+                        </div>
+
+                        <!-- Provider Label -->
+                        <span class="text-[7px] sm:text-[10px] text-purple-100 font-semibold uppercase tracking-wider whitespace-nowrap">
+                            Grok (xAI)
+                        </span>
+                    </div>
+
+                    <!-- 2️⃣ Wavespeed Balance (Updated with Logo + Provider Name) -->
+                    <a href="https://wavespeed.ai/top-up" target="_blank"
+                       class="balance-topup-button w-[75px] sm:w-auto sm:min-w-[120px] px-2 py-1.5 sm:px-4 sm:py-2.5 rounded-lg sm:rounded-xl
+                              bg-gradient-to-r from-cyan-600 to-cyan-700 hover:from-cyan-500 hover:to-cyan-600
+                              border-2 border-cyan-400/50 hover:border-cyan-300
+                              transition-all duration-200 transform hover:scale-105
+                              shadow-lg hover:shadow-cyan-500/50
+                              flex flex-col items-center justify-center gap-0.5
+                              cursor-pointer touch-target flex-shrink-0 relative">
+
+                        <!-- Wavespeed Logo (top-left corner) -->
+                        <img src="assets/WS_logo.jpg" alt="Wavespeed"
+                             class="absolute top-1 left-1 w-3 h-3 sm:w-4 sm:h-4 opacity-60 rounded">
+
+                        <!-- Balance Amount -->
+                        <span class="text-xs sm:text-xl font-bold text-white neon-text-cyan leading-none whitespace-nowrap" id="credit_balance">
+                            $-.---
+                        </span>
+
+                        <!-- Provider Label (changed from "TOP UP") -->
+                        <span class="text-[7px] sm:text-[10px] text-cyan-100 font-semibold uppercase tracking-wider whitespace-nowrap">
+                            Wavespeed
+                        </span>
+                    </a>
+                </div>
             </div>
         </div>
     </header>
@@ -453,6 +499,9 @@ Previous Releases:
                                         </option>
                                         <option value="ws-wan-26-image-edit">
                                             WAN 2.6 - $0.035 per edit
+                                        </option>
+                                        <option value="grok-imagine-image">
+                                            Grok Imagine Image - $0.022 per edit
                                         </option>
                                     </select>
                                 </div>
@@ -1838,6 +1887,27 @@ Previous Releases:
                 currentData: null            // currentVideoData
             }
         };
+
+        // ========== 💰 GROK BALANCE: Constants & State ==========
+        // Grok API Pricing (from official docs - 2026)
+        const GROK_PRICING = {
+            video: {
+                '480p': 0.05,  // $0.05 per second
+                '720p': 0.07   // $0.07 per second
+            },
+            image: {
+                inputImage: 0.002,      // $0.002 per input image
+                outputImage1K: 0.02,    // $0.02 per 1K (1024×1024) output
+                totalEdit: 0.022        // Total for image edit (input + output)
+            }
+        };
+
+        // Grok Balance State
+        const GrokBalanceState = {
+            balance: 0.000,
+            lastUpdated: null
+        };
+        // ========== END GROK BALANCE: Constants & State ==========
 
         // Backwards compatibility aliases (will be migrated gradually)
         let currentGenerationId = null;      // → AppState.generation.id
@@ -4403,6 +4473,11 @@ Previous Releases:
 
             fetchUsageStats_Wavespeed(); // โหลด Wavespeed balance เมื่อเปิดหน้า
 
+            // ========== 💰 INITIALIZE GROK BALANCE ==========
+            loadGrokBalance();           // Load Grok balance from localStorage
+            initGrokBalanceInput();      // Setup contenteditable handlers
+            // ========== END GROK BALANCE INIT ==========
+
             // Load API toggle states
             const wavespeedEnabled = localStorage.getItem('wavespeed_api_enabled');
             toggleWavespeedApi.checked = wavespeedEnabled !== 'false'; // Default to true
@@ -5454,6 +5529,185 @@ Previous Releases:
                 creditBalance.textContent = '$ERR';
             }
         }
+
+        // ========== 💰 GROK BALANCE: Management Functions ==========
+
+        /**
+         * Load Grok balance from localStorage
+         */
+        function loadGrokBalance() {
+            const saved = localStorage.getItem('grokBalance');
+            GrokBalanceState.balance = saved ? parseFloat(saved) : 0.000;
+            updateGrokBalanceDisplay();
+            console.log('💾 Grok balance loaded:', GrokBalanceState.balance);
+        }
+
+        /**
+         * Save Grok balance to localStorage
+         */
+        function saveGrokBalance() {
+            try {
+                localStorage.setItem('grokBalance', GrokBalanceState.balance.toFixed(3));
+                GrokBalanceState.lastUpdated = new Date().toISOString();
+                console.log('💾 Grok balance saved:', GrokBalanceState.balance);
+            } catch (error) {
+                console.error('❌ Failed to save Grok balance to localStorage:', error);
+                // Continue with in-memory state only
+            }
+        }
+
+        /**
+         * Update Grok balance display in UI
+         */
+        function updateGrokBalanceDisplay() {
+            const el = document.getElementById('grok_balance');
+            if (!el) return;
+
+            el.textContent = `$${GrokBalanceState.balance.toFixed(3)}`;
+
+            // Low balance warning (< $0.01) - change border color
+            const container = el.parentElement.parentElement;
+            if (GrokBalanceState.balance < 0.01) {
+                container.classList.add('low-balance');
+            } else {
+                container.classList.remove('low-balance');
+            }
+        }
+
+        /**
+         * Deduct cost from Grok balance
+         * @param {number} cost - Amount to deduct
+         * @param {string} description - Description for logging
+         */
+        function deductGrokBalance(cost, description = '') {
+            const prev = GrokBalanceState.balance;
+            GrokBalanceState.balance = Math.max(0, prev - cost);
+
+            console.log(`💰 Grok Balance Deducted:`, {
+                action: description,
+                cost: `$${cost.toFixed(3)}`,
+                before: `$${prev.toFixed(3)}`,
+                after: `$${GrokBalanceState.balance.toFixed(3)}`
+            });
+
+            saveGrokBalance();
+            updateGrokBalanceDisplay();
+
+            // Warn if balance is low
+            if (GrokBalanceState.balance < 0.10 && GrokBalanceState.balance > 0) {
+                console.warn('⚠️ Grok balance is low:', GrokBalanceState.balance);
+            }
+        }
+
+        /**
+         * Calculate Grok video generation cost
+         * @param {number} duration - Video duration in seconds
+         * @param {string} resolution - '480p' or '720p'
+         * @param {boolean} hasInputImage - Whether input image was used
+         * @returns {number} Total cost in dollars
+         */
+        function calculateGrokVideoCost(duration, resolution, hasInputImage = true) {
+            const pricePerSec = GROK_PRICING.video[resolution] || GROK_PRICING.video['720p'];
+            let cost = duration * pricePerSec;
+            if (hasInputImage) {
+                cost += GROK_PRICING.image.inputImage;
+            }
+            return cost;
+        }
+
+        /**
+         * Calculate Grok image edit cost
+         * @returns {number} Total cost in dollars ($0.022)
+         */
+        function calculateGrokImageEditCost() {
+            return GROK_PRICING.image.totalEdit; // $0.022 (input + output)
+        }
+
+        /**
+         * Setup manual balance input handlers for contenteditable field
+         */
+        function initGrokBalanceInput() {
+            const el = document.getElementById('grok_balance');
+            if (!el) return;
+
+            // Store original value on focus
+            el.addEventListener('focus', function() {
+                this.dataset.originalValue = this.textContent;
+                // Select all text for easy editing
+                const range = document.createRange();
+                range.selectNodeContents(this);
+                const sel = window.getSelection();
+                sel.removeAllRanges();
+                sel.addRange(range);
+            });
+
+            // Validate input (allow only numbers and dot)
+            el.addEventListener('input', function() {
+                let text = this.textContent.replace(/[^0-9.]/g, '');
+                // Ensure only one dot
+                const parts = text.split('.');
+                if (parts.length > 2) {
+                    text = parts[0] + '.' + parts.slice(1).join('');
+                }
+                // Update if changed
+                if (this.textContent !== text) {
+                    this.textContent = text;
+                    // Move cursor to end
+                    const range = document.createRange();
+                    range.selectNodeContents(this);
+                    range.collapse(false);
+                    const sel = window.getSelection();
+                    sel.removeAllRanges();
+                    sel.addRange(range);
+                }
+            });
+
+            // Save on blur
+            el.addEventListener('blur', function() {
+                const text = this.textContent.trim();
+                const value = parseFloat(text);
+
+                if (isNaN(value) || value < 0) {
+                    // Invalid input - restore previous value
+                    this.textContent = `$${GrokBalanceState.balance.toFixed(3)}`;
+                    alert('❌ Invalid balance amount. Please enter a valid number.');
+                    return;
+                }
+
+                // Clamp to reasonable range (0 to $10,000)
+                const clamped = Math.min(10000, Math.max(0, value));
+
+                if (clamped !== value) {
+                    console.warn('⚠️ Balance clamped to valid range:', clamped);
+                }
+
+                GrokBalanceState.balance = clamped;
+                saveGrokBalance();
+                updateGrokBalanceDisplay();
+
+                // Visual feedback
+                this.parentElement.parentElement.style.transform = 'scale(1.05)';
+                setTimeout(() => {
+                    this.parentElement.parentElement.style.transform = '';
+                }, 200);
+
+                console.log('✅ Grok balance manually updated:', clamped);
+            });
+
+            // Enter = save, Escape = cancel
+            el.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    this.blur();
+                } else if (e.key === 'Escape') {
+                    e.preventDefault();
+                    this.textContent = this.dataset.originalValue;
+                    this.blur();
+                }
+            });
+        }
+
+        // ========== END GROK BALANCE: Management Functions ==========
 
         // --- UI Update Functions ---
         // Update Aspect Ratio Options based on model
@@ -6733,8 +6987,10 @@ Previous Releases:
 
             let pollCount = 0;
             let elapsedSeconds = 0;
+            let consecutiveErrors = 0; // 🚨 FIX: Track consecutive errors to prevent infinite retry
             const MAX_POLL_COUNT = 360; // ~30 minutes (for wan 2.6 long generation)
-            const MAX_TIMEOUT = 1800; // 1800 seconds (30 minutes) 
+            const MAX_TIMEOUT = 1800; // 1800 seconds (30 minutes)
+            const MAX_CONSECUTIVE_ERRORS = 3; // 🚨 Stop after 3 consecutive errors 
 
             // Store pollingUrl globally ONLY for cancellation logic
             currentPollingUrl = pollingUrl;
@@ -6825,6 +7081,7 @@ Previous Releases:
                     }
 
                     if (isSuccess) {
+                        consecutiveErrors = 0; // 🚨 FIX: Reset consecutive errors on successful poll
                         updateStatusUI(status, elapsedSeconds);
 
                         // ========== ✨ NEW: Save generation state during polling (v1.11.0) ==========
@@ -6893,8 +7150,16 @@ Previous Releases:
                                 }
                                 // ========== END: Grok Blob Download ==========
 
+                                // Extract cache key from Grok video URL for IndexedDB lookup
+                                let cacheKey = null;
+                                if (provider === 'grok' && videoUrl) {
+                                    const urlMatch = videoUrl.match(/xai-video-([a-f0-9-]+)/);
+                                    cacheKey = urlMatch ? urlMatch[1] : null;
+                                }
+
                                 const finalData = {
                                     video_url: videoUrl,  // 🚨 CRITICAL: Always save ORIGINAL URL (not blob) for history
+                                    cacheKey: cacheKey,   // 💾 For retrieving cached blob from IndexedDB
                                     prompt: currentPrompt,
                                     model: modelName,
                                     duration: completedData?.duration || (durationSelectWavespeed ? parseInt(durationSelectWavespeed.value) : 0) || 0,
@@ -6924,29 +7189,45 @@ Previous Releases:
                 } catch (error) {
                     // Stop polling on critical errors
                     const errorMsg = error.message || String(error);
+                    const errorMsgLower = errorMsg.toLowerCase(); // 🚨 FIX: Case-insensitive matching
+
+                    // 🚨 FIX: Track consecutive errors
+                    consecutiveErrors++;
+                    console.warn(`⚠️ Consecutive error #${consecutiveErrors}:`, errorMsg);
 
                     // Critical errors that should stop polling immediately
+                    // 🚨 FIX: Use lowercase for case-insensitive matching
                     const shouldStopPolling =
-                        errorMsg.includes("ไม่พบ") ||                    // 404 - Task not found
-                        errorMsg.includes("ล้มเหลว") ||                  // Failed status
-                        errorMsg.includes("ยกเลิก") ||                   // Canceled status
-                        errorMsg.includes("failed") ||                   // API failed response
-                        errorMsg.includes("canceled") ||                 // API canceled response
-                        errorMsg.includes("do not support") ||           // Content filter rejection
-                        errorMsg.includes("photorealistic people") ||    // OpenAI content filter
-                        errorMsg.includes("NSFW") ||                     // NSFW filter
-                        errorMsg.includes("inappropriate") ||            // Inappropriate content
-                        errorMsg.includes("GROK CONTENT FILTER") ||      // 🚨 CRITICAL: Grok content moderation (saves money!)
-                        errorMsg.includes("content moderation") ||       // Content moderation
-                        errorMsg.includes("rejected by");                // Rejected by filter
+                        errorMsg.includes("ไม่พบ") ||                    // 404 - Task not found (Thai)
+                        errorMsg.includes("ล้มเหลว") ||                  // Failed status (Thai)
+                        errorMsg.includes("ยกเลิก") ||                   // Canceled status (Thai)
+                        errorMsgLower.includes("failed") ||              // 🚨 FIX: "Failed" or "failed"
+                        errorMsgLower.includes("canceled") ||            // API canceled response
+                        errorMsgLower.includes("cancelled") ||           // British spelling
+                        errorMsgLower.includes("do not support") ||      // Content filter rejection
+                        errorMsgLower.includes("photorealistic people") || // OpenAI content filter
+                        errorMsgLower.includes("nsfw") ||                // 🚨 FIX: "NSFW" or "nsfw"
+                        errorMsgLower.includes("inappropriate") ||       // Inappropriate content
+                        errorMsgLower.includes("content moderation") ||  // Content moderation
+                        errorMsgLower.includes("content filter") ||      // 🚨 NEW: Content filter
+                        errorMsgLower.includes("content policy") ||      // 🚨 NEW: Content policy
+                        errorMsgLower.includes("policy violation") ||    // 🚨 NEW: Policy violation
+                        errorMsgLower.includes("rejected") ||            // 🚨 FIX: Any rejection
+                        errorMsgLower.includes("blocked") ||             // 🚨 NEW: Blocked content
+                        errorMsgLower.includes("respect_moderation") ||  // 🚨 NEW: Grok moderation flag
+                        consecutiveErrors >= MAX_CONSECUTIVE_ERRORS;     // 🚨 NEW: Stop after 3 consecutive errors
 
                     if (shouldStopPolling) {
-                        console.error(`❌ ${currentProvider} Critical Error - Stopping polling:`, errorMsg);
+                        if (consecutiveErrors >= MAX_CONSECUTIVE_ERRORS) {
+                            console.error(`❌ ${currentProvider} Max consecutive errors (${MAX_CONSECUTIVE_ERRORS}) reached - Stopping polling`);
+                        } else {
+                            console.error(`❌ ${currentProvider} Critical Error - Stopping polling:`, errorMsg);
+                        }
                         handleGenerationError(error); // Stop polling and show error
                     } else {
-                        // Non-critical errors - retry
-                        console.warn(`⚠️ ${currentProvider} Polling Error (will retry):`, errorMsg);
-                        statusText.textContent = `🔄 เกิดข้อผิดพลาดในการตรวจสอบ (${errorMsg}) กำลังลองใหม่...`;
+                        // Non-critical errors - retry (but will stop after MAX_CONSECUTIVE_ERRORS)
+                        console.warn(`⚠️ ${currentProvider} Polling Error (will retry, attempt ${consecutiveErrors}/${MAX_CONSECUTIVE_ERRORS}):`, errorMsg);
+                        statusText.textContent = `🔄 เกิดข้อผิดพลาดในการตรวจสอบ (${errorMsg}) กำลังลองใหม่... (${consecutiveErrors}/${MAX_CONSECUTIVE_ERRORS})`;
                     }
                 } finally {
                     // Always reset polling flag
@@ -7482,6 +7763,9 @@ Previous Releases:
                     break;
                 case 'gemini':
                     await editImage_Gemini();
+                    break;
+                case 'grok':
+                    await editImage_Grok();
                     break;
                 default:
                     alert(`❌ Provider "${config.provider}" not implemented`);
@@ -8164,6 +8448,11 @@ Previous Releases:
                 const data = await response.json();
                 console.log('✅ Grok generation response:', data);
 
+                // ========== 💰 DEDUCT GROK BALANCE (immediately on API success) ==========
+                const videoCost = calculateGrokVideoCost(duration, resolution, true);
+                deductGrokBalance(videoCost, `Video generation: ${duration}s @ ${resolution}`);
+                // ========== END BALANCE DEDUCTION ==========
+
                 // 4. Extract request_id (support both flat and nested structure)
                 const requestId = data.request_id || data.video?.request_id || data.id;
                 if (!requestId) {
@@ -8262,9 +8551,9 @@ Previous Releases:
                 return;
             }
 
-            // Get image data
-            const imageData = captureImageData();
-            if (!imageData || !imageData.cropped) {
+            // Get image data (use imageBase64Data directly like other providers)
+            const sourceImage = window.imageBase64Data || imageBase64Data;
+            if (!sourceImage) {
                 alert('❌ No image to edit. Please upload an image first.');
                 return;
             }
@@ -8276,18 +8565,50 @@ Previous Releases:
                 return;
             }
 
-            // Show processing overlay
-            updateImageEditOverlay('⚙️ กำลังแก้ไขภาพ...');
+            // Add current image to history before editing (same pattern as Gemini/WAN)
+            if (imageBase64Data && typeof window.imageEditHistory !== 'undefined') {
+                const historyState = window.imageEditHistory.getState?.();
+                if (!historyState || historyState.length === 0) {
+                    window.imageEditHistory.add(imageBase64Data);
+                    console.log('📸 Original image added to edit history');
+                }
+            }
+
+            // UI feedback - disable button
+            const editBtn = document.getElementById('edit-image-btn');
+            const originalText = editBtn.innerHTML;
+            editBtn.disabled = true;
+            editBtn.innerHTML = '<span class="animate-pulse">กำลังส่งคำขอ...</span>';
+
+            // Show floating processing visual
+            showFloatingProcessing(sourceImage, 0);
 
             const apiKey = getGrokApiKey();
+            const startTime = Date.now();
+
+            // Simulate progress during processing
+            const progressInterval = setInterval(() => {
+                const elapsed = Date.now() - startTime;
+                const progress = Math.min((elapsed / 15000) * 100, 95); // 15s expected
+                updateFloatingProgress(Math.round(progress));
+            }, 500);
 
             try {
-                // Grok accepts base64 data URI directly for image editing!
-                const dataUri = imageData.cropped;
+                // 1. Check imgbb API key (same as video generation)
+                const imgbbKey = localStorage.getItem('imgbb_api_key');
+                if (!imgbbKey) {
+                    throw new Error('imgbb API key not found. Please add it in Settings.');
+                }
 
+                // 2. Upload image to imgbb to get public URL (required by Grok API)
+                console.log('📤 Uploading image to imgbb...');
+                const publicImageUrl = await uploadImageToImgbb(sourceImage);
+                console.log('✅ Image uploaded:', publicImageUrl);
+
+                // 3. Build payload with object format { url: '...' }
                 const payload = {
                     model: 'grok-imagine-image',
-                    image: dataUri,  // data:image/jpeg;base64,...
+                    image: { url: publicImageUrl },  // ✅ Use public URL from imgbb
                     prompt: prompt
                 };
 
@@ -8302,13 +8623,35 @@ Previous Releases:
                     body: JSON.stringify(payload)
                 });
 
+                // Log response for debugging
+                console.log('📥 Grok API Response Status:', response.status, response.statusText);
+
                 if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.error?.message || `HTTP ${response.status}`);
+                    // Try to get response text first
+                    const responseText = await response.text();
+                    console.error('❌ Grok API Error Response:', responseText);
+
+                    // Try to parse as JSON
+                    try {
+                        const errorData = JSON.parse(responseText);
+                        throw new Error(errorData.error?.message || errorData.message || `HTTP ${response.status}: ${response.statusText}`);
+                    } catch (parseError) {
+                        // If not JSON, throw the raw text
+                        throw new Error(`HTTP ${response.status}: ${responseText.substring(0, 200)}`);
+                    }
                 }
 
+                clearInterval(progressInterval);
+                updateFloatingProgress(100);
+
                 const data = await response.json();
+                console.log('📥 Grok API Response Data:', data);
                 console.log('✅ Grok image edit complete');
+
+                // ========== 💰 DEDUCT GROK BALANCE (immediately on API success) ==========
+                const imageCost = calculateGrokImageEditCost();
+                deductGrokBalance(imageCost, 'Image edit (1K output)');
+                // ========== END BALANCE DEDUCTION ==========
 
                 // Get result URL (instant response, no polling!)
                 const resultUrl = data.data?.[0]?.url;
@@ -8316,12 +8659,21 @@ Previous Releases:
                     throw new Error('No image URL in response');
                 }
 
-                // Download and display edited image
-                await handleImageEditCompleteGrok(resultUrl);
+                // Increment counter for unique filename
+                imageEditCounter++;
+                saveImageEditCounter();
+
+                // Download, convert to base64, upload to imgbb, add to history, and display
+                await handleImageEditCompleteGrok(resultUrl, prompt);
 
             } catch (error) {
                 console.error('❌ Grok image edit failed:', error);
-                updateImageEditOverlay('❌ แก้ไขภาพล้มเหลว');
+                clearInterval(progressInterval);
+                hideFloatingProcessing();
+
+                // Reset button
+                editBtn.disabled = false;
+                editBtn.innerHTML = originalText;
 
                 let errorMessage = `❌ Image Edit Failed\n\n${error.message}`;
 
@@ -8336,40 +8688,210 @@ Previous Releases:
         }
 
         // Handle Grok image edit complete
-        async function handleImageEditCompleteGrok(imageUrl) {
+        async function handleImageEditCompleteGrok(imageUrl, prompt) {
             console.log('📥 Downloading edited image from Grok:', imageUrl);
 
             try {
-                // Download image
-                const response = await fetch(imageUrl);
-                if (!response.ok) {
-                    throw new Error(`Failed to download image: ${response.status}`);
-                }
+                // 1. Try to load image and convert to base64 using img + canvas (bypasses CORS for display)
+                let base64Data = await new Promise((resolve, reject) => {
+                    const img = new Image();
+                    img.crossOrigin = 'anonymous'; // Try with CORS first
 
-                const blob = await response.blob();
-                const base64Data = await new Promise((resolve) => {
-                    const reader = new FileReader();
-                    reader.onloadend = () => resolve(reader.result);
-                    reader.readAsDataURL(blob);
+                    img.onload = () => {
+                        try {
+                            // Try to draw to canvas to extract base64
+                            const canvas = document.createElement('canvas');
+                            canvas.width = img.naturalWidth;
+                            canvas.height = img.naturalHeight;
+                            const ctx = canvas.getContext('2d');
+                            ctx.drawImage(img, 0, 0);
+
+                            // Get base64 data
+                            const base64 = canvas.toDataURL('image/jpeg', 0.95);
+                            console.log('✅ Image loaded and converted to base64 via canvas');
+                            resolve(base64);
+                        } catch (canvasError) {
+                            console.warn('⚠️ Canvas extraction failed (CORS):', canvasError.message);
+                            // Try without crossOrigin
+                            const img2 = new Image();
+                            img2.onload = () => {
+                                try {
+                                    const canvas2 = document.createElement('canvas');
+                                    canvas2.width = img2.naturalWidth;
+                                    canvas2.height = img2.naturalHeight;
+                                    const ctx2 = canvas2.getContext('2d');
+                                    ctx2.drawImage(img2, 0, 0);
+                                    const base64_retry = canvas2.toDataURL('image/jpeg', 0.95);
+                                    console.log('✅ Image loaded (no crossOrigin) and converted to base64');
+                                    resolve(base64_retry);
+                                } catch (e2) {
+                                    console.warn('⚠️ Canvas still failed - image will use URL directly');
+                                    resolve(null);
+                                }
+                            };
+                            img2.onerror = () => resolve(null);
+                            img2.src = imageUrl;
+                        }
+                    };
+
+                    img.onerror = () => {
+                        console.warn('⚠️ Image load failed with crossOrigin, trying without...');
+                        // Retry without crossOrigin
+                        const img2 = new Image();
+                        img2.onload = () => {
+                            try {
+                                const canvas = document.createElement('canvas');
+                                canvas.width = img2.naturalWidth;
+                                canvas.height = img2.naturalHeight;
+                                const ctx = canvas.getContext('2d');
+                                ctx.drawImage(img2, 0, 0);
+                                const base64 = canvas.toDataURL('image/jpeg', 0.95);
+                                console.log('✅ Image loaded (retry) and converted to base64');
+                                resolve(base64);
+                            } catch (e) {
+                                console.warn('⚠️ All methods failed - will use URL directly');
+                                resolve(null);
+                            }
+                        };
+                        img2.onerror = () => reject(new Error('Failed to load image'));
+                        img2.src = imageUrl;
+                    };
+
+                    img.src = imageUrl;
                 });
 
-                // Display edited image
-                const imageDisplay = document.getElementById('uploaded-image-display');
-                if (imageDisplay) {
-                    imageDisplay.src = base64Data;
-                    console.log('✅ Edited image displayed');
+                // 2. Create pseudo prediction ID for history
+                const pseudoId = `grok-${Date.now()}-${imageEditCounter}`;
+
+                // 3. Save task input for history
+                saveTaskInput(pseudoId, {
+                    prompt: prompt,
+                    negativePrompt: '',
+                    model: 'Grok Imagine Image',
+                    modelKey: 'grok-imagine-image',
+                    outputType: 'image',
+                    timestamp: new Date().toISOString(),
+                    imageCounter: imageEditCounter
+                });
+
+                // 4. Add to history (use Grok URL temporarily if base64 failed)
+                const placeholderImageData = {
+                    id: pseudoId,
+                    url: base64Data || imageUrl,  // Use base64 if available, otherwise Grok URL
+                    prompt: prompt,
+                    negativePrompt: '',
+                    model: 'Grok Imagine Image',
+                    modelKey: 'grok-imagine-image',
+                    provider: 'grok',
+                    outputType: 'image',
+                    status: 'completed',
+                    initialImage: base64Data || imageUrl,
+                    createdAt: new Date().toISOString()
+                };
+
+                videoHistoryData.unshift(placeholderImageData);
+
+                // Save to localStorage temporarily
+                safeSetLocalStorage('videoHistory', JSON.stringify(videoHistoryData));
+
+                renderVideoHistory();
+
+                // 5. Upload to imgbb for permanent storage (same as Gemini)
+                if (base64Data) {
+                    try {
+                        console.log('📤 Uploading Grok image to imgbb...');
+                        const imgbbUrl = await uploadImageToImgbb(base64Data);
+                        console.log('✅ Grok image uploaded to imgbb:', imgbbUrl);
+
+                        // Update history item with permanent URL
+                        const grokIndex = videoHistoryData.findIndex(v => v.id === pseudoId);
+                        if (grokIndex !== -1) {
+                            videoHistoryData[grokIndex].url = imgbbUrl;
+                            videoHistoryData[grokIndex].imgbbUrl = imgbbUrl;
+                            // Remove base64 to save space
+                            delete videoHistoryData[grokIndex].initialImage;
+                            console.log('💾 Updated Grok history with permanent imgbb URL (removed base64)');
+                        }
+
+                        // Save with permanent URL
+                        safeSetLocalStorage('videoHistory', JSON.stringify(videoHistoryData));
+                        console.log('💾 Grok history saved with imgbb URL');
+
+                        // Re-render to show imgbb URL
+                        renderVideoHistory();
+                        console.log('🔄 History re-rendered with imgbb URL');
+
+                    } catch (uploadError) {
+                        console.warn('⚠️ imgbb upload failed, keeping Grok URL as fallback:', uploadError.message);
+                    }
                 }
 
-                // Hide overlay
-                updateImageEditOverlay('');
+                // 6. Update image in UI (use base64 if available, otherwise use imageUrl)
+                const displayData = base64Data || imageUrl;
 
-                // Show success message
-                alert('✅ Image edited successfully with Grok!');
+                if (base64Data) {
+                    imageBase64Data = base64Data;
+                    window.imageBase64Data = base64Data;
+                } else {
+                    // Use URL directly if base64 failed
+                    imageBase64Data = imageUrl;
+                    window.imageBase64Data = imageUrl;
+                    console.log('⚠️ Using Grok URL directly (no base64 available)');
+                }
+
+                const previewImg = document.getElementById('image-preview-left');
+
+                hideFloatingProcessing(() => {
+                    if (previewImg) {
+                        previewImg.style.transition = 'opacity 300ms ease-in-out';
+                        previewImg.style.opacity = '0';
+
+                        setTimeout(() => {
+                            previewImg.src = displayData;
+                            previewImg.style.opacity = '1';
+
+                            const previewContainer = document.getElementById('image-preview-container-left');
+                            if (previewContainer) {
+                                previewContainer.classList.add('border-pulse-cyan');
+                                setTimeout(() => {
+                                    previewContainer.classList.remove('border-pulse-cyan');
+                                }, 1000);
+                            }
+                        }, 300);
+                    }
+                });
+
+                // Add to edit history (use base64 if available, otherwise URL)
+                if (displayData && typeof window.imageEditHistory !== 'undefined') {
+                    window.imageEditHistory.add(displayData);
+                    console.log('✅ Edited image added to history');
+                }
+
+                // Update modal image if open
+                const modalImageFull = document.getElementById('modal-image-full');
+                if (modalImageFull) {
+                    modalImageFull.src = displayData;
+                }
+
+                // Auto-save to downloads if enabled (only if base64)
+                const autoSaveEnabled = document.getElementById('auto-save-toggle')?.checked;
+                if (autoSaveEnabled && base64Data) {
+                    downloadImageFromBase64(base64Data, `grok_edited_${imageEditCounter}.jpg`);
+                }
+
+                // Reset edit button
+                const editBtn = document.getElementById('edit-image-btn');
+                editBtn.disabled = false;
+                editBtn.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg> <span id="edit-btn-text">Edit Image</span>';
+
+                syncBothUIs('updateProgress', { width: '100%' });
+
+                console.log('✅ Grok image edit complete!');
 
             } catch (error) {
-                console.error('❌ Failed to display edited image:', error);
-                updateImageEditOverlay('❌ ล้มเหลว');
-                alert(`❌ Failed to download edited image:\n\n${error.message}`);
+                console.error('❌ Failed to process edited image:', error);
+                hideFloatingProcessing();
+                alert(`❌ Failed to process edited image:\n\n${error.message}`);
             }
         }
 
@@ -8382,9 +8904,8 @@ Previous Releases:
                 return false;
             }
 
-            // Check image
-            const imageDisplay = document.getElementById('uploaded-image-display');
-            if (!imageDisplay || !imageDisplay.src || imageDisplay.src === '') {
+            // Check image (use imageBase64Data like other providers)
+            if (!imageBase64Data) {
                 alert('❌ No image to edit. Please upload an image first.');
                 return false;
             }
@@ -8461,6 +8982,24 @@ Previous Releases:
                 // Create blob URL
                 const blobUrl = URL.createObjectURL(blob);
                 console.log('✅ Blob URL created:', blobUrl);
+
+                // 💾 PERMANENT STORAGE: Save blob to IndexedDB so video survives URL expiration
+                // This is CRITICAL for Grok videos because their URLs expire after a few hours
+                try {
+                    // Extract video ID from URL (e.g., xai-video-xxx.mp4)
+                    const urlMatch = videoUrl.match(/xai-video-([a-f0-9-]+)/);
+                    const videoIdFromUrl = urlMatch ? urlMatch[1] : null;
+
+                    if (videoIdFromUrl && videoDB) {
+                        await cacheToDB(videoIdFromUrl, blob, { provider: 'grok', originalUrl: videoUrl });
+                        console.log('💾 Grok video blob saved to IndexedDB for permanent storage:', videoIdFromUrl);
+                    } else {
+                        console.warn('⚠️ Could not save blob to IndexedDB (no videoId or DB not ready)');
+                    }
+                } catch (cacheError) {
+                    console.warn('⚠️ Failed to cache blob to IndexedDB:', cacheError.message);
+                    // Continue anyway - at least we have the blob URL for now
+                }
 
                 return blobUrl;
             } catch (error) {
@@ -8909,6 +9448,19 @@ Previous Releases:
                     localStorage.setItem('videoHistory', JSON.stringify(videoHistoryData));
                     console.log(`✅ Auto-cleanup: Removed ${beforeCount - videoHistoryData.length} invalid items`);
                 }
+
+                // 🧹 AUTO-DELETE: Remove videos that were previously marked as expired
+                const expiredCount = videoHistoryData.filter(v => v.expired === true).length;
+                if (expiredCount > 0) {
+                    videoHistoryData = videoHistoryData.filter(v => v.expired !== true);
+                    localStorage.setItem('videoHistory', JSON.stringify(videoHistoryData));
+                    console.log(`🗑️ Auto-deleted ${expiredCount} expired videos (URLs no longer valid)`);
+                }
+
+                // 🗑️ FORCE DELETE: Remove specific known expired Grok videos
+                if (typeof forceDeleteExpiredGrokVideos === 'function') {
+                    forceDeleteExpiredGrokVideos();
+                }
             } catch (e) {
                 console.error("Error parsing history from localStorage:", e);
                 videoHistoryData = []; // Reset if parsing fails
@@ -9078,6 +9630,101 @@ Previous Releases:
                 console.error('Error checking status:', error);
                 alert(`Error: ${error.message}`);
             }
+        }
+
+        /**
+         * Handle video load error in history (e.g., expired URLs)
+         * @param {HTMLVideoElement} videoElement - The video element that failed
+         * @param {string} videoId - The video ID
+         * @param {string} provider - The provider (grok, wavespeed, etc.)
+         */
+        function handleVideoLoadError(videoElement, videoId, provider) {
+            console.warn(`⚠️ Video load error: ${videoId} (${provider})`);
+
+            // Hide video, show placeholder
+            videoElement.style.display = 'none';
+            const placeholder = videoElement.parentElement?.querySelector('.placeholder-icon');
+            if (placeholder) {
+                placeholder.style.display = 'flex';
+
+                // Update error message based on provider
+                const errorMsg = placeholder.querySelector('.error-message');
+                if (errorMsg) {
+                    if (provider === 'grok') {
+                        errorMsg.textContent = 'Video หมดอายุ (Grok URLs expire)';
+                    } else {
+                        errorMsg.textContent = 'ไม่สามารถโหลดได้';
+                    }
+                }
+            }
+
+            // Mark video as expired in history data (don't delete, just flag)
+            const itemIndex = videoHistoryData.findIndex(v => v.id === videoId);
+            if (itemIndex !== -1 && !videoHistoryData[itemIndex].expired) {
+                videoHistoryData[itemIndex].expired = true;
+                safeSetLocalStorage('videoHistory', JSON.stringify(videoHistoryData));
+                console.log(`⏰ Marked ${videoId} as expired`);
+            }
+        }
+        window.handleVideoLoadError = handleVideoLoadError; // Make globally accessible
+
+        /**
+         * Delete all expired videos from history
+         * Called from console: deleteExpiredVideos()
+         */
+        async function deleteExpiredVideos() {
+            const expiredVideos = videoHistoryData.filter(v => v.expired === true);
+            if (expiredVideos.length === 0) {
+                console.log('✅ No expired videos to delete');
+                return { deleted: 0 };
+            }
+
+            console.log(`🗑️ Found ${expiredVideos.length} expired videos, deleting...`);
+
+            // Remove expired videos from array
+            const beforeCount = videoHistoryData.length;
+            videoHistoryData = videoHistoryData.filter(v => v.expired !== true);
+
+            // Save to localStorage
+            safeSetLocalStorage('videoHistory', JSON.stringify(videoHistoryData));
+
+            // Re-render history
+            renderVideoHistory();
+
+            const deletedCount = beforeCount - videoHistoryData.length;
+            console.log(`✅ Deleted ${deletedCount} expired videos`);
+            return { deleted: deletedCount };
+        }
+        window.deleteExpiredVideos = deleteExpiredVideos; // Make globally accessible
+
+        /**
+         * Force delete specific expired Grok videos by URL pattern
+         * Auto-called on page load
+         */
+        function forceDeleteExpiredGrokVideos() {
+            const expiredUrls = [
+                'xai-video-9f599368-0cb3-4ba7-9a09-b0be103990c4',
+                'xai-video-5e84cd5b-d7b2-486e-9c61-5eb114ca61af'
+            ];
+
+            const beforeCount = videoHistoryData.length;
+            videoHistoryData = videoHistoryData.filter(video => {
+                if (video.provider === 'grok' && video.url) {
+                    const hasExpiredUrl = expiredUrls.some(pattern => video.url.includes(pattern));
+                    if (hasExpiredUrl) {
+                        console.log(`🗑️ Force deleting expired Grok: ${video.id}`);
+                        return false;
+                    }
+                }
+                return true;
+            });
+
+            const deleted = beforeCount - videoHistoryData.length;
+            if (deleted > 0) {
+                safeSetLocalStorage('videoHistory', JSON.stringify(videoHistoryData));
+                console.log(`✅ Force deleted ${deleted} expired Grok videos`);
+            }
+            return deleted;
         }
 
         /**
@@ -9879,11 +10526,11 @@ Previous Releases:
                                 muted
                                 playsinline
                                 loop
-                                onerror="console.error('Video load error:', '${video.id}', this.error); this.style.display='none'; this.parentElement.querySelector('.placeholder-icon').style.display='flex';"
+                                onerror="handleVideoLoadError(this, '${video.id}', '${video.provider || 'unknown'}')"
                             ></video>
-                            <div class="placeholder-icon absolute inset-0 flex items-center justify-center bg-gray-900" style="display: none;">
-                                <svg class="w-12 h-12 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
-                                <p class="text-xs text-gray-500 mt-2">Failed to load</p>
+                            <div class="placeholder-icon absolute inset-0 flex flex-col items-center justify-center bg-gray-900" style="display: none;">
+                                <svg class="w-10 h-10 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                <p class="error-message text-xs text-gray-500 mt-2 text-center px-2">Video expired</p>
                             </div>
                             <div class="absolute inset-0 flex items-center justify-center bg-black/30 hover:bg-black/10 transition-all group">
                                 <!-- Download Button -->
@@ -10405,11 +11052,28 @@ Previous Releases:
             completedVideosData = completedVideos;
 
             // ========== Render history with cached URLs ==========
-            // Get all cached URLs first (sync after pre-load)
+            // Get all cached URLs first (LRU cache + IndexedDB for Grok videos)
             const cachedUrls = new Map();
             for (const video of completedVideos) {
                 if (video && video.id) {
-                    const cached = await getCachedVideo(video.id);
+                    // 1. Try LRU cache first
+                    let cached = await getCachedVideo(video.id);
+
+                    // 2. For Grok videos: Try IndexedDB with cacheKey
+                    if (!cached && video.provider === 'grok' && video.cacheKey) {
+                        try {
+                            const dbEntry = await getFromDB(video.cacheKey);
+                            if (dbEntry && dbEntry.blob) {
+                                cached = URL.createObjectURL(dbEntry.blob);
+                                console.log(`💾 Restored Grok video from IndexedDB: ${video.cacheKey}`);
+                                // Also add to LRU cache for faster access
+                                await videoCache.set(video.id, cached, dbEntry.blob.size);
+                            }
+                        } catch (e) {
+                            console.warn('⚠️ Failed to get from IndexedDB:', e.message);
+                        }
+                    }
+
                     if (cached) {
                         cachedUrls.set(video.id, cached);
                     }
@@ -10618,11 +11282,11 @@ Previous Releases:
                                             muted
                                             playsinline
                                             loop
-                                            onerror="console.error('Video load error:', '${video.id}', this.error); this.style.display='none'; this.parentElement.querySelector('.placeholder-icon').style.display='flex';"
+                                            onerror="handleVideoLoadError(this, '${video.id}', '${video.provider || 'unknown'}')"
                                         ></video>
-                                        <div class="placeholder-icon absolute inset-0 flex items-center justify-center bg-gray-900" style="display: none;">
-                                            <svg class="w-12 h-12 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
-                                            <p class="text-xs text-gray-500 mt-2">Failed to load</p>
+                                        <div class="placeholder-icon absolute inset-0 flex flex-col items-center justify-center bg-gray-900" style="display: none;">
+                                            <svg class="w-10 h-10 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                            <p class="error-message text-xs text-gray-500 mt-2 text-center px-2">Video expired</p>
                                         </div>
                                         <div class="absolute inset-0 flex items-center justify-center bg-black/30 hover:bg-black/10 transition-all group">
                                             <!-- Download Button -->
@@ -10733,26 +11397,53 @@ Previous Releases:
 
                 let blob;
 
-                // Get cached or fetch video
-                const cachedUrl = await getCachedVideo(video.id);
+                // 🚨 GROK FIX: Special handling for Grok videos (no CORS)
+                if (video.provider === 'grok') {
+                    console.log('🤖 Grok video detected - trying cached blob...');
 
-                if (cachedUrl && cachedUrl.startsWith('blob:')) {
-                    // Already have blob URL, fetch the blob from it
-                    console.log('📥 Using cached blob URL');
-                    const response = await fetch(cachedUrl);
-                    blob = await response.blob();
-                } else if (video.url) {
-                    // Wavespeed: direct URL, fetch without auth
-                    console.log('📥 Fetching Wavespeed video...');
-                    const response = await fetch(video.url);
+                    // Try LRU cache first
+                    let cachedUrl = await getCachedVideo(video.id);
 
-                    if (!response.ok) {
-                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    // Try IndexedDB with cacheKey if not in LRU
+                    if (!cachedUrl && video.cacheKey) {
+                        try {
+                            const dbEntry = await getFromDB(video.cacheKey);
+                            if (dbEntry && dbEntry.blob) {
+                                cachedUrl = URL.createObjectURL(dbEntry.blob);
+                                console.log('💾 Retrieved Grok blob from IndexedDB');
+                            }
+                        } catch (e) {
+                            console.warn('⚠️ IndexedDB fetch failed:', e.message);
+                        }
                     }
 
-                    blob = await response.blob();
+                    if (cachedUrl && cachedUrl.startsWith('blob:')) {
+                        console.log('✅ Using cached Grok blob');
+                        const response = await fetch(cachedUrl);
+                        blob = await response.blob();
+                    } else {
+                        throw new Error('Grok video ไม่มี cached blob\n\nกรุณาเปิดวิดีโอในหน้าต่างแสดงผลก่อน\n(คลิกที่วิดีโอเพื่อเปิด modal)\n\nหลังจากนั้นจะ download ได้');
+                    }
                 } else {
-                    throw new Error('ไม่พบ URL ของวิดีโอ');
+                    // Wavespeed or other providers
+                    const cachedUrl = await getCachedVideo(video.id);
+
+                    if (cachedUrl && cachedUrl.startsWith('blob:')) {
+                        console.log('📥 Using cached blob URL');
+                        const response = await fetch(cachedUrl);
+                        blob = await response.blob();
+                    } else if (video.url) {
+                        console.log('📥 Fetching video from URL...');
+                        const response = await fetch(video.url);
+
+                        if (!response.ok) {
+                            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                        }
+
+                        blob = await response.blob();
+                    } else {
+                        throw new Error('ไม่พบ URL ของวิดีโอ');
+                    }
                 }
 
                 // Verify we got a video blob

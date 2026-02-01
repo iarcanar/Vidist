@@ -173,18 +173,18 @@ const MODEL_CONFIG = {
         maxResolution: "720p",
         supportedResolutions: ["720p", "480p"],
         supportsAudio: false,  // No audio support
-        features: ["i2v", "video-edit"],
+        features: ["i2v"],  // 🚨 Removed "video-edit" - not implemented yet
         supportsNegativePrompt: false,
         supportsShotType: false,
         supportsExpansion: false,
         // Grok-specific features
         aspectRatios: ["16:9", "4:3", "1:1", "9:16", "3:4", "3:2", "2:3"],
-        supportsVideoEdit: true,
-        maxEditDuration: 8.7,  // Max 8.7s input for editing
+        // supportsVideoEdit: true,  // 🚨 Disabled - not implemented yet
+        // maxEditDuration: 8.7,     // Max 8.7s input for editing (for future implementation)
         requiresPublicUrl: true,  // Must convert base64 to public URL
         pricing: {
-            '720p': null,  // TBD
-            '480p': null   // TBD
+            '720p': 0.07,  // $0.07 per second
+            '480p': 0.05   // $0.05 per second
         }
     },
     // Grok Imagine Image Edit (x.ai)
@@ -201,7 +201,7 @@ const MODEL_CONFIG = {
         aspectRatios: ["16:9", "9:16", "1:1", "4:3", "3:4", "3:2", "2:3", "4:5", "5:4", "21:9", "9:21"],
         instantResponse: true,  // No polling required
         pricing: {
-            'fixed': null  // TBD
+            'fixed': 0.022  // $0.022 per edit (input $0.002 + output $0.02)
         }
     }
 };
