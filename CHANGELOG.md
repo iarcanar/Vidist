@@ -1,5 +1,92 @@
 # VIDIST Changelog
 
+## v3.8.3 (2026-02-14)
+**🐛 localStorage Quota Fix + 📱 Mobile Progress Bar Layout**
+
+### Bug Fixes
+
+**1. localStorage Quota Fix (CRITICAL)**
+- **Bug #1 (ROOT CAUSE):** `safeSetLocalStorage()` used stale pre-cleanup value parameter
+  - After `smartCleanupStorage()` modified `videoHistoryData` in-memory, retry still used original oversized JSON string
+  - All cleanup was completely wasted
+  - **Fix:** Re-stringify `videoHistoryData` after each cleanup phase (4 points: proactive strip, checkStorageAndCleanup, smartCleanupStorage, targeted cleanup)
+
+- **Bug #2:** `stripOldInitialImages()` only stripped items with `imgbbUrl`
+  - Missed WaveSpeed video items with valid `url` but no `imgbbUrl`
+  - WaveSpeed videos store large base64 `initialImage` that's unnecessary after completion
+  - **Fix:** Added `hasValidUrl` check - strip any completed item with valid http url OR imgbbUrl
+
+- **Bug #3:** No proactive stripping before save
+  - System waited until QuotaExceededError to strip initialImages
+  - **Fix:** New `stripCompletedInitialImages()` function auto-strips `initialImage` from all completed items with permanent URLs before every videoHistory save
+
+- **Bonus Bug:** Missing `JSON.stringify()` in import functions
+  - `mergeImportedHistory()` and `replaceImportedHistory()` passed array object directly to `safeSetLocalStorage`
+  - **Fix:** Added `JSON.stringify()` to both functions
+
+**Console Symptoms Fixed:**
+```
+"✅ Storage cleanup complete" → "🔄 First cleanup not enough"
+→ "✅ Targeted cleanup completed" → "❌ Cannot save videoHistory - storage full"
+```
+No longer occurs!
+
+**User Impact:**
+- ✅ Videos now appear in history immediately after generation (no page refresh needed)
+- ✅ No more "storage full" warnings
+- ✅ Automatic cleanup of unnecessary base64 data
+
+### Mobile UX Improvements
+
+**2. Mobile Progress Bar Layout Fix**
+- **Problem:** On mobile (< 768px), progress bar was squeezed because GENERATE button shared horizontal space
+  - Status text like "✅ สร้างวิดีโอสำเร็จ! (ใช้เวลา 75.00 วินาที)" couldn't display fully
+
+- **Solution:** Vertical stack layout for mobile
+  - GENERATE button moved to top (100% width)
+  - Progress bar below (100% width)
+  - Desktop layout unchanged (horizontal)
+
+- **Implementation:** Added CSS media query (@media max-width: 768px)
+  - Container: `flex-direction: column-reverse`
+  - Progress bar: `width: 100%`
+  - Generate button: `width: 100%`
+
+**Before (Mobile):**
+```
+[Progress Bar ──] [GEN]  ← Text cut off
+```
+
+**After (Mobile):**
+```
+[GENERATE BUTTON 100%]
+[Progress Bar 100%]
+✅ สร้างวิดีโอสำเร็จ! (ใช้เวลา 75.00 วินาที)  ← Full text visible
+```
+
+### Files Modified
+
+| File | Changes |
+|------|---------|
+| `index.html` | +`stripCompletedInitialImages()` (~20 lines), modified `stripOldInitialImages()` (+hasValidUrl), rewritten `safeSetLocalStorage()` (4 re-stringify points + proactive strip), fixed 2 import functions with `JSON.stringify()` |
+| `css/main.css` | +Mobile media query (lines 1644-1669) for progress bar layout |
+| `js/version.js` | Patch bump v3.8.2 → v3.8.3 |
+
+### Verification
+
+**localStorage Fix:**
+1. Generate video → History updates immediately (no refresh)
+2. Generate multiple videos → No "storage full" errors
+3. Console shows "🧹 Proactively stripped X initialImages" instead of errors
+4. Processing items still display thumbnails correctly (not stripped)
+
+**Mobile Layout:**
+1. Desktop (> 768px) → Layout unchanged (horizontal)
+2. Mobile (< 768px) → GENERATE button on top, progress bar full width below
+3. Status text displays completely without truncation
+
+---
+
 ## v3.8.0 (2026-02-13)
 **🚀 MAJOR - Cloud Storage + Auto Image Compression + No-Retry Policy**
 

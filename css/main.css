@@ -1641,3 +1641,30 @@ input[value="img"] + div:hover {
     min-width: 44px;
 }
 
+/* ========== Mobile View: Progress Bar Layout Fix ========== */
+/* v3.8.3: ปุ่ม GENERATE ย้ายขึ้นด้านบน, Progress Bar ขยายเต็มความกว้าง */
+@media (max-width: 768px) {
+    /* 1. Container เปลี่ยนจาก horizontal → vertical (column-reverse) */
+    /* column-reverse = ปุ่มขึ้นบน, progress ลงล่าง */
+    .mb-6.flex.gap-3.items-center:has(#status-container-top) {
+        flex-direction: column-reverse !important;
+        gap: 0.75rem !important;
+    }
+
+    /* 2. Progress Bar ขยายเต็มความกว้าง */
+    #status-container-top {
+        width: 100% !important;
+    }
+
+    /* 3. GENERATE Button ขยายเต็มความกว้างด้วย */
+    #generate-btn-top {
+        width: 100% !important;
+    }
+
+    /* 4. Cancel Button responsive (มี w-full อยู่แล้ว แต่ต้องแน่ใจ) */
+    #cancel-generation-btn-top {
+        width: 100% !important;
+        margin-bottom: 0.75rem !important;
+    }
+}
+

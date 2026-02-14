@@ -2203,8 +2203,9 @@ Previous Releases:
                 if (item.initialImage && item.initialImage.length > 10000) {
                     imageCount++;
                     if (imageCount > keepCount) {
-                        // Prefer stripping items that have imgbbUrl (permanent copy exists)
-                        if (item.imgbbUrl || imageCount > keepCount + 2) {
+                        // v3.8.3: Strip items that have ANY valid permanent URL (not just imgbbUrl)
+                        const hasValidUrl = item.url && item.url.startsWith('http');
+                        if (item.imgbbUrl || hasValidUrl || imageCount > keepCount + 2) {
                             delete historyArray[i].initialImage;
                             strippedCount++;
                         }
@@ -2216,34 +2217,71 @@ Previous Releases:
             }
             return historyArray;
         }
+        /**
+         * v3.8.3: Proactively strip initialImage from completed items that have valid URLs.
+         * Called before every videoHistory save to prevent quota errors.
+         * Safe because: completed videos use url for playback, completed images use imgbbUrl.
+         */
+        function stripCompletedInitialImages(historyArray) {
+            let strippedCount = 0;
+            for (let i = 0; i < historyArray.length; i++) {
+                const item = historyArray[i];
+                if (item.initialImage && item.initialImage.length > 10000 &&
+                    item.status === 'completed') {
+                    const hasValidUrl = item.url && item.url.startsWith('http');
+                    const hasImgbbUrl = item.imgbbUrl && item.imgbbUrl.startsWith('http');
+                    if (hasValidUrl || hasImgbbUrl) {
+                        delete historyArray[i].initialImage;
+                        strippedCount++;
+                    }
+                }
+            }
+            if (strippedCount > 0) {
+                console.log(`🧹 Proactively stripped ${strippedCount} initialImages from completed items`);
+            }
+            return strippedCount;
+        }
         // ========== END: Proactive initialImage Size Management ==========
 
         // ฟังก์ชันบันทึกลง localStorage แบบปลอดภัย (auto-cleanup SILENT - ไม่แจ้งเตือน)
         function safeSetLocalStorage(key, value) {
+            // ⚡ v3.8.3: Proactively strip initialImages from completed items before saving
+            if (key === 'videoHistory') {
+                const stripped = stripCompletedInitialImages(videoHistoryData);
+                if (stripped > 0) {
+                    value = JSON.stringify(videoHistoryData);
+                }
+            }
+
             // ✨ NEW (v2.9.0): Proactive check before saving
             if (key === 'videoHistory' && value.length > 100000) {
                 // If saving large data (>100KB), check storage first
                 checkStorageAndCleanup();
+                // ⚡ v3.8.3 FIX: Re-stringify after proactive cleanup modified videoHistoryData
+                if (key === 'videoHistory') {
+                    value = JSON.stringify(videoHistoryData);
+                }
             }
-
-            // เช็คขนาดของข้อมูลที่จะบันทึก
-            const dataSizeKB = (value.length / 1024).toFixed(2);
 
             try {
                 localStorage.setItem(key, value);
-                invalidateLocalStorageCache(); // ✅ PERFORMANCE FIX: Invalidate cache after write
+                invalidateLocalStorageCache();
                 return true;
             } catch (error) {
                 if (error.name === 'QuotaExceededError') {
-                    console.log(`🔄 localStorage quota exceeded for key "${key}" (${dataSizeKB}KB), auto-cleaning silently...`);
+                    console.log(`🔄 localStorage quota exceeded for key "${key}" (${(value.length / 1024).toFixed(2)}KB), auto-cleaning silently...`);
 
                     // ทำความสะอาดและลองใหม่ (ไม่แจ้งเตือน)
                     if (smartCleanupStorage()) {
-                        invalidateLocalStorageCache(); // ✅ Cache invalidated by cleanup
+                        invalidateLocalStorageCache();
+                        // ⚡ v3.8.3 FIX: Re-stringify after smartCleanupStorage modified videoHistoryData
+                        if (key === 'videoHistory') {
+                            value = JSON.stringify(videoHistoryData);
+                        }
                         try {
                             localStorage.setItem(key, value);
-                            invalidateLocalStorageCache(); // ✅ Cache invalidated by write
-                            console.log(`✅ Saved after cleanup: ${key} (${dataSizeKB}KB)`);
+                            invalidateLocalStorageCache();
+                            console.log(`✅ Saved after cleanup: ${key} (${(value.length / 1024).toFixed(2)}KB)`);
                             return true;
                         } catch (retryError) {
                             // ลองทำความสะอาดแบบ aggressive - เน้น strip initialImages ก่อน
@@ -2265,10 +2303,15 @@ Previous Releases:
 
                             console.log('✅ Targeted cleanup completed');
 
+                            // ⚡ v3.8.3 FIX: Re-stringify after targeted cleanup modified videoHistoryData
+                            if (key === 'videoHistory') {
+                                value = JSON.stringify(videoHistoryData);
+                            }
+
                             try {
                                 localStorage.setItem(key, value);
                                 invalidateLocalStorageCache();
-                                console.log(`✅ Saved after targeted cleanup: ${key} (${dataSizeKB}KB)`);
+                                console.log(`✅ Saved after targeted cleanup: ${key} (${(value.length / 1024).toFixed(2)}KB)`);
                                 return true;
                             } catch (finalError) {
                                 // แสดง warning ชั่วคราวแทน silent fail
@@ -4914,6 +4957,27 @@ Previous Releases:
 
                 if (key) fetchUsageStats_Wavespeed();
                 console.log('✅ Wavespeed API key saved to localStorage');
+
+                // ☁️ NEW v3.8.2: Auto-refresh video URLs if cloud sync is signed in
+                if (window.vidistCloud && window.vidistCloud.isSignedIn && window.vidistCloud.isSignedIn()) {
+                    if (typeof videoHistoryData !== 'undefined' && videoHistoryData.length > 0) {
+                        console.log('☁️ WaveSpeed API key saved - refreshing video URLs...');
+                        window.vidistCloud.refreshURLsFromAPI(videoHistoryData)
+                            .then(count => {
+                                if (count > 0) {
+                                    console.log(`☁️ Refreshed ${count} video URLs after API key save`);
+                                }
+                            })
+                            .catch(err => {
+                                console.error('☁️ Failed to refresh URLs:', err);
+                            });
+                    }
+                }
+
+                // ☁️ v3.8.2: Auto-save API keys to cloud
+                if (window.vidistCloud && window.vidistCloud.isSignedIn && window.vidistCloud.isSignedIn()) {
+                    window.vidistCloud.saveAPIKeys();
+                }
             });
 
             // Gemini API Key Save Button
@@ -4941,6 +5005,11 @@ Previous Releases:
                 }, 2000);
 
                 console.log('✅ Gemini API key saved to localStorage');
+
+                // ☁️ v3.8.2: Auto-save API keys to cloud
+                if (window.vidistCloud && window.vidistCloud.isSignedIn && window.vidistCloud.isSignedIn()) {
+                    window.vidistCloud.saveAPIKeys();
+                }
             });
 
             // Grok API Key Save Button (x.ai)
@@ -4970,6 +5039,11 @@ Previous Releases:
                 }, 2000);
 
                 console.log('✅ imgbb API key saved to localStorage');
+
+                // ☁️ v3.8.2: Auto-save API keys to cloud
+                if (window.vidistCloud && window.vidistCloud.isSignedIn && window.vidistCloud.isSignedIn()) {
+                    window.vidistCloud.saveAPIKeys();
+                }
             });
 
             // ========== 💾 v3.4.0: File System Handler Functions ==========
@@ -9852,7 +9926,7 @@ Previous Releases:
             }
 
             // Save to localStorage
-            safeSetLocalStorage('videoHistory', videoHistoryData);
+            safeSetLocalStorage('videoHistory', JSON.stringify(videoHistoryData));
 
             // Update UI
             renderVideoHistory();
@@ -9875,7 +9949,7 @@ Previous Releases:
             videoHistoryData = importedData;
 
             // Save to localStorage
-            safeSetLocalStorage('videoHistory', videoHistoryData);
+            safeSetLocalStorage('videoHistory', JSON.stringify(videoHistoryData));
 
             // Update UI
             renderVideoHistory();
