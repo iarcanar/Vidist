@@ -56,6 +56,3 @@ Xai_key
 
 # ========== Test Files ==========
 test_*.html
-
-# ========== Firebase Config (Contains Real API Keys) ==========
-js/firebase_config.js
