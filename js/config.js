@@ -160,48 +160,38 @@ const MODEL_CONFIG = {
             '1080p': 0.084  // Same price per second
         }
     },
-    // Grok Imagine Video (x.ai)
+    // Grok Imagine Video (x.ai) - via WaveSpeed proxy
     "grok-imagine-video": {
-        provider: 'grok',
+        provider: 'wavespeed',
         name: 'Grok Imagine Video',
-        internal_id: 'grok-imagine-video',
-        // Duration: 1-15 seconds (flexible range)
-        durationMode: 'range',
-        minDuration: 1,
-        maxDuration: 15,
+        internal_id: 'x-ai/grok-imagine-video/image-to-video',
+        // Duration: WaveSpeed proxy supports 6 or 10 seconds only
+        durationMode: 'fixed',
+        allowedDurations: [6, 10],
         // Resolution: 720p or 480p
         maxResolution: "720p",
         supportedResolutions: ["720p", "480p"],
         supportsAudio: false,  // No audio support
-        features: ["i2v"],  // 🚨 Removed "video-edit" - not implemented yet
+        features: ["i2v"],
         supportsNegativePrompt: false,
         supportsShotType: false,
         supportsExpansion: false,
-        // Grok-specific features
-        aspectRatios: ["16:9", "4:3", "1:1", "9:16", "3:4", "3:2", "2:3"],
-        // supportsVideoEdit: true,  // 🚨 Disabled - not implemented yet
-        // maxEditDuration: 8.7,     // Max 8.7s input for editing (for future implementation)
-        requiresPublicUrl: true,  // Must convert base64 to public URL
         pricing: {
             '720p': 0.07,  // $0.07 per second
             '480p': 0.05   // $0.05 per second
         }
     },
-    // Grok Imagine Image Edit (x.ai)
+    // Grok Imagine Image Edit (x.ai) - via WaveSpeed proxy
     "grok-imagine-image": {
-        provider: 'grok',
+        provider: 'wavespeed',
         name: 'Grok Imagine Image',
-        internal_id: 'grok-imagine-image',
+        internal_id: 'x-ai/grok-imagine-image/edit',
         outputType: 'image',
         features: ["image-edit"],
         supportsNegativePrompt: false,
         supportsExpansion: false,
-        // Grok-specific features
-        supportsBase64: true,  // Accepts data URI directly
-        aspectRatios: ["16:9", "9:16", "1:1", "4:3", "3:4", "3:2", "2:3", "4:5", "5:4", "21:9", "9:21"],
-        instantResponse: true,  // No polling required
         pricing: {
-            'fixed': 0.022  // $0.022 per edit (input $0.002 + output $0.02)
+            'fixed': 0.022  // $0.022 per edit
         }
     }
 };
