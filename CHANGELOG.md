@@ -1,5 +1,89 @@
 # VIDIST Changelog
 
+## v3.8.4 (2026-02-14)
+**📱 Grok/WAN Image Edit - imgbb Auto-Upload**
+
+### Bug Fixes
+
+**Critical: Missing Images After Cloud Sync**
+- **Problem:** Grok/WAN image edit history items showed "No prompt available" with missing thumbnails after cloud sync across devices
+  - Error logs: `HTTP "Content-Type" of "binary/octet-stream" is not supported`
+  - Only affected Grok/WAN image edits, not videos
+
+**Root Cause:**
+1. **Large base64 storage:** Grok/WAN stored ~500KB-2MB base64 in `initialImage` field
+2. **Cloud sync limitation:** Firestore 200KB limit → `initialImage` stripped during sync
+3. **No permanent URL:** Unlike Gemini, Grok/WAN had no `imgbbUrl` backup
+4. **Cross-device failure:** Device B received only metadata, no image data → cannot display
+
+**Solution:**
+- Applied same imgbb auto-upload pattern as Gemini
+- Upload edited images to imgbb immediately after generation
+- Store permanent `imgbbUrl` instead of large base64
+- Delete `initialImage` after successful upload (95%+ size reduction)
+
+**Implementation:**
+1. **Main path** ([index.html:9137-9183](index.html#L9137-L9183)) - ~47 lines
+   - Added imgbb upload after WAN local save
+   - Checks `imageMode` setting (imgbb/local/both)
+   - Updates history with `imgbbUrl`, deletes `initialImage`
+   - Re-renders history, updates cloud if signed in
+
+2. **Fallback path** ([index.html:9237-9264](index.html#L9237-L9264)) - ~20 lines
+   - Handles placeholder-not-found scenario
+   - Same upload pattern for consistency
+
+**Benefits:**
+- ✅ Images accessible across all devices via permanent imgbb URLs
+- ✅ Cloud sync works (small URL string vs large base64)
+- ✅ localStorage quota savings (95%+ reduction per image)
+- ✅ Consistent behavior (Grok/WAN/Gemini all use imgbb)
+- ✅ No more "No prompt available" or missing thumbnails
+
+**Technical:**
+- Reuses existing `uploadImageToImgbb()` function
+- Respects user `imageMode` setting
+- Graceful fallback if imgbb unavailable (keeps base64)
+- Total ~67 lines added, purely additive
+- No breaking changes
+
+**Testing:**
+```
+Local test results:
+✅ Image edit completed successfully
+✅ Fallback path triggered (placeholder not found)
+📤 Uploading fallback Grok/WAN image to imgbb...
+✅ Image uploaded to imgbb: https://i.ibb.co/d0pMkgV6/e8c8b99535ce.jpg
+💾 Cached image hash: d23af71184608a26...
+📊 Storage usage: 3236.77KB (63.2%)
+```
+
+### Files Modified
+
+| File | Changes |
+|------|---------|
+| `index.html` | +2 imgbb upload blocks (~67 lines) in `handleImageEditComplete()` |
+| `js/version.js` | Patch bump v3.8.3 → v3.8.4, added changelog entry |
+
+### Data Flow
+
+**Before v3.8.4:**
+```
+Generate → base64 (~2MB) → localStorage (QUOTA RISK)
+         → Cloud sync STRIPS base64
+         → New device: No image data ❌
+```
+
+**After v3.8.4:**
+```
+Generate → base64 → Upload to imgbb → Permanent URL
+         → Delete base64 → localStorage (~100 bytes)
+         → Cloud sync: URL synced successfully
+         → New device: Image displays ✅
+```
+
+---
+
 ## v3.8.3 (2026-02-14)
 **🐛 localStorage Quota Fix + 📱 Mobile Progress Bar Layout**
 

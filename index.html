@@ -9134,6 +9134,52 @@ Previous Releases:
                             }
                         }
                         // ========== END: Save WAN image to local drive ==========
+
+                        // ========== ✨ NEW v3.8.4: Auto-upload Grok/WAN images to imgbb ==========
+                        // 💾 Check if should upload to imgbb based on settings (same as Gemini)
+                        const fsImageMode = window.vidistFS?.getSettings()?.imageMode || 'both';
+                        const shouldUploadToImgbb = (fsImageMode === 'imgbb' || fsImageMode === 'both');
+
+                        if (shouldUploadToImgbb) {
+                            try {
+                                console.log('📤 Uploading Grok/WAN image to imgbb...');
+                                const imgbbUrl = await uploadImageToImgbb(base64);
+                                console.log('✅ Grok/WAN image uploaded:', imgbbUrl);
+
+                                // Update history item with permanent URL
+                                const placeholderIndex2 = videoHistoryData.findIndex(v => v.id === currentEditPredictionId);
+                                if (placeholderIndex2 !== -1) {
+                                    videoHistoryData[placeholderIndex2].url = imgbbUrl;
+                                    videoHistoryData[placeholderIndex2].imgbbUrl = imgbbUrl;
+                                    // 🔥 Remove base64 to save space (imgbb URL is now the source)
+                                    delete videoHistoryData[placeholderIndex2].initialImage;
+                                    console.log('💾 Updated Grok/WAN history with permanent imgbb URL (removed base64)');
+                                }
+
+                                // Save with permanent URL (tiny size!)
+                                safeSetLocalStorage('videoHistory', JSON.stringify(videoHistoryData));
+                                console.log('💾 Grok/WAN history saved with imgbb URL (no quota issues!)');
+
+                                // 🔄 Re-render to show imgbb URL instead of base64
+                                renderVideoHistory();
+                                console.log('🔄 History re-rendered with imgbb URL');
+
+                                // ☁️ Update cloud with imgbb URL if signed in
+                                if (window.vidistCloud?.isSignedIn()) {
+                                    window.vidistCloud.updateHistoryItem(currentEditPredictionId, {
+                                        imgbbUrl,
+                                        url: imgbbUrl
+                                    })
+                                        .then(() => console.log('☁️ Updated cloud with imgbb URL:', currentEditPredictionId))
+                                        .catch(err => console.error('❌ Cloud update failed (imgbb):', err));
+                                }
+
+                            } catch (uploadError) {
+                                console.warn('⚠️ imgbb upload failed, keeping base64 as fallback:', uploadError.message);
+                                // Base64 already saved above (line 9085), just log the warning
+                            }
+                        } // End of shouldUploadToImgbb
+                        // ========== END: Auto-upload Grok/WAN images to imgbb ==========
                     } else {
                         // 🚨 ERROR: Placeholder not found (v2.12.15)
                         console.error('❌ PLACEHOLDER NOT FOUND:', {
@@ -9188,6 +9234,34 @@ Previous Releases:
                         renderVideoHistory(true); // Force critical render for fallback path
 
                         console.log('➕ Added image edit as new item (fallback)');
+
+                        // ========== ✨ NEW v3.8.4: Auto-upload fallback Grok/WAN images to imgbb ==========
+                        const fsImageMode = window.vidistFS?.getSettings()?.imageMode || 'both';
+                        const shouldUploadToImgbb = (fsImageMode === 'imgbb' || fsImageMode === 'both');
+
+                        if (shouldUploadToImgbb) {
+                            try {
+                                console.log('📤 Uploading fallback Grok/WAN image to imgbb...');
+                                const imgbbUrl = await uploadImageToImgbb(base64);
+
+                                // Update the newly created item (at index 0 since we used unshift)
+                                videoHistoryData[0].url = imgbbUrl;
+                                videoHistoryData[0].imgbbUrl = imgbbUrl;
+                                delete videoHistoryData[0].initialImage;
+
+                                safeSetLocalStorage('videoHistory', JSON.stringify(videoHistoryData));
+                                renderVideoHistory();
+
+                                // ☁️ Update cloud
+                                if (window.vidistCloud?.isSignedIn()) {
+                                    window.vidistCloud.saveHistoryItem(videoHistoryData[0])
+                                        .catch(err => console.error('❌ Cloud save failed:', err));
+                                }
+                            } catch (uploadError) {
+                                console.warn('⚠️ imgbb upload failed (fallback):', uploadError.message);
+                            }
+                        }
+                        // ========== END: Auto-upload fallback ==========
                     }
                 }
 
