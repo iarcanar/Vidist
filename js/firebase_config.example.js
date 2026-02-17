@@ -1,33 +1,27 @@
 /**
- * VIDIST Firebase Configuration Template
+ * VIDIST Firebase Configuration — EXAMPLE TEMPLATE
  *
- * สำหรับการเชื่อมต่อกับ Firebase project (Authentication + Firestore)
+ * วิธีใช้:
+ * 1. Copy ไฟล์นี้เป็น  js/firebase_config.local.js
+ * 2. ใส่ API key จริงที่ได้จาก Google Cloud Console (key ที่ restrict แล้ว)
+ * 3. ห้าม commit  firebase_config.local.js  (อยู่ใน .gitignore แล้ว)
  *
- * ⚠️ นี่คือไฟล์ TEMPLATE - คัดลอกเป็น firebase_config.js และใส่ค่าจริง
- *
- * ขั้นตอนการตั้งค่า:
- * 1. คัดลอกไฟล์นี้: cp js/firebase_config.example.js js/firebase_config.js
- * 2. ไปที่ https://console.firebase.google.com/
- * 3. สร้าง Firebase project ใหม่
- * 4. เปิดใช้งาน Authentication → Google Sign-In provider
- * 5. เปิดใช้งาน Firestore Database (production mode)
- * 6. ไปที่ Project Settings → General → Your apps → Web app
- * 7. คัดลอก config object
- * 8. แทนที่ค่า placeholder ด้านล่างด้วยค่าจริง
+ * การ restrict API key:
+ * - ไปที่ https://console.cloud.google.com/apis/credentials
+ * - เลือก key → Edit → Application restrictions: HTTP referrers
+ * - ใส่: https://iarcanar.github.io/*
+ * - API restrictions: เลือกเฉพาะ Firebase APIs
  */
 
 const FIREBASE_CONFIG = {
-    apiKey: "YOUR_API_KEY_HERE",
-    authDomain: "your-project-id.firebaseapp.com",
-    projectId: "your-project-id",
-    storageBucket: "your-project-id.appspot.com",
-    messagingSenderId: "123456789012",
-    appId: "1:123456789012:web:abcdef1234567890"
+    apiKey: "YOUR_NEW_RESTRICTED_API_KEY_HERE",
+    authDomain: "vidist-507a9.firebaseapp.com",
+    projectId: "vidist-507a9",
+    storageBucket: "vidist-507a9.firebasestorage.app",
+    messagingSenderId: "378407691521",
+    appId: "1:378407691521:web:9da7b25c34e6a89cbfe700"
 };
 
-// Export for use in cloud_sync.js
 if (typeof window !== 'undefined') {
     window.FIREBASE_CONFIG = FIREBASE_CONFIG;
 }
-
-console.log('📋 Firebase Config loaded (using placeholder - update with real values)');

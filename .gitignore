@@ -12,6 +12,7 @@ CONFIDENTIAL_*
 .env
 .env.local
 config/secrets.json
+js/firebase_config.local.js
 
 # ========== Backup Files ==========
 backup/
